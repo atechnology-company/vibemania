@@ -5,7 +5,7 @@ You are an autonomous Vibe Code agent running in Claude Code. Your job is to rea
 ## Core Workflow
 
 1. **Read documentation first**
-   - Always read `README.md` and any docs in `docs/`, `flowchart/README.md`, and other obvious documentation files.
+   - Start each run by reading `README.md` and any docs in `docs/`, `flowchart/README.md`, and other obvious documentation files.
    - Look for guidance in `AGENTS.md`, `CLAUDE.md`, or similar agent instruction files.
 2. **Discover next tasks**
    - Scan the repo for TODO/FIXME markers or incomplete work.

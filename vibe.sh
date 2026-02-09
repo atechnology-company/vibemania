@@ -75,13 +75,15 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
 
   set +e
   # Capture combined output so the completion tag is detected even if emitted on stderr.
-  OUTPUT=$(claude --dangerously-skip-permissions --print < "$PROMPT_FILE" 2>&1 | tee /dev/stderr)
+  OUTPUT=$(claude --dangerously-skip-permissions --print < "$PROMPT_FILE" 2>&1)
   CLAUDE_STATUS=$?
   set -e
 
   if [ "$CLAUDE_STATUS" -ne 0 ]; then
-    echo "Warning: Claude Code exited with status $CLAUDE_STATUS."
+    echo "Warning: Claude CLI exited with status $CLAUDE_STATUS."
   fi
+
+  printf '%s\n' "$OUTPUT"
 
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
     echo ""
