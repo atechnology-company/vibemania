@@ -1,6 +1,6 @@
 name: VibeMania
 options:
-  bundleIdPrefix: com.vibemania
+  bundleIdPrefix: company.atechnology
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
@@ -16,7 +16,7 @@ targets:
       - Resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.vibemania.app
+        PRODUCT_BUNDLE_IDENTIFIER: company.atechnology.vibemania
         GENERATE_INFOPLIST_FILE: true
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: 1

@@ -24,13 +24,11 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             VStack(spacing: 0) {
-                // Mode toggle
-                Picker("Mode", selection: $mode) {
-                    Label("Conversations", systemImage: "message.fill").tag(ViewMode.conversations)
-                    Label("Projects", systemImage: "folder.fill").tag(ViewMode.projects)
-                }
-                .pickerStyle(.segmented)
-                .padding()
+                // Large oval mode toggle at top - macOS 26 style
+                ModeSelectorView(mode: $mode)
+                    .padding(.top, 20)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
 
                 Divider()
 
@@ -92,5 +90,76 @@ struct ContentView: View {
         for agent in agentManager.runningAgents {
             agentManager.stopAgent(agent)
         }
+    }
+}
+
+// MARK: - Mode Selector View (macOS 26 Liquid Glass Style)
+
+struct ModeSelectorView: View {
+    @Binding var mode: ContentView.ViewMode
+    @Namespace private var animation
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ModeButton(
+                title: "conversations",
+                icon: "message.fill",
+                isSelected: mode == .conversations,
+                namespace: animation
+            ) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    mode = .conversations
+                }
+            }
+
+            ModeButton(
+                title: "projects",
+                icon: "folder.fill",
+                isSelected: mode == .projects,
+                namespace: animation
+            ) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    mode = .projects
+                }
+            }
+        }
+        .padding(4)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(
+            Capsule()
+                .strokeBorder(.quaternary, lineWidth: 0.5)
+        )
+    }
+}
+
+struct ModeButton: View {
+    let title: String
+    let icon: String
+    let isSelected: Bool
+    let namespace: Namespace.ID
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+            }
+            .foregroundStyle(isSelected ? .primary : .secondary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .background {
+                if isSelected {
+                    Capsule()
+                        .fill(.background)
+                        .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+                        .matchedGeometryEffect(id: "mode_selector", in: namespace)
+                }
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
