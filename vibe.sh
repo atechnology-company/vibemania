@@ -48,20 +48,8 @@ if [ ! -f "$PROMPT_FILE" ]; then
 fi
 
 if [ ! -f "$TODO_FILE" ]; then
-  cat <<'EOF' > "$TODO_FILE"
-# Vibe TODO
-
-## Backlog
-- [ ] Read README.md and any docs to understand project goals
-- [ ] Scan the repo for TODO/FIXME markers or missing tasks
-- [ ] Create a prioritized task list for the next steps
-
-## In Progress
-- [ ] (Move the active task here)
-
-## Done
-- [x] (Completed tasks go here)
-EOF
+  echo "Error: Missing todo.md. Create it using the format in VIBE.md."
+  exit 1
 fi
 
 echo "Starting Vibe Code - Max iterations: $MAX_ITERATIONS"
