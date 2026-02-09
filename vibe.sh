@@ -24,7 +24,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if ! command -v claude >/dev/null 2>&1; then
-  echo "Error: Claude Code CLI not found. Install '@anthropic-ai/claude-code' first."
+  echo "Error: Claude Code CLI not found. Install with 'npm install -g @anthropic-ai/claude-code'."
   exit 1
 fi
 
@@ -55,6 +55,7 @@ EOF
 fi
 
 echo "Starting Vibe Code - Max iterations: $MAX_ITERATIONS"
+echo "Warning: Vibe uses --dangerously-skip-permissions for autonomous operation."
 
 for i in $(seq 1 "$MAX_ITERATIONS"); do
   echo ""
