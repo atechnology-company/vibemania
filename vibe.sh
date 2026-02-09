@@ -88,4 +88,5 @@ done
 echo ""
 echo "Vibe reached max iterations ($MAX_ITERATIONS) without completing all tasks."
 echo "Check $TODO_FILE for status."
+echo "Exiting with status 1 to signal incomplete work."
 exit 1

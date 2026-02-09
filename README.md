@@ -150,7 +150,7 @@ Vibe will:
 2. Scan the repo for TODOs and missing tasks
 3. Update `todo.md` with a prioritized checklist
 4. Implement the top unchecked task
-5. Repeat until every task is complete, then output `<promise>COMPLETE</promise>`
+5. Repeat until every task is complete, then Claude outputs `<promise>COMPLETE</promise>`
 
 ## Key Files
 
