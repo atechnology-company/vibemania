@@ -129,6 +129,29 @@ Ralph will:
 7. Append learnings to `progress.txt`
 8. Repeat until all stories pass or max iterations reached
 
+## Vibe Code (Claude-only)
+
+Vibe Code is a Claude-only loop that reads the README/docs, discovers the next tasks, and maintains a living `todo.md` as it works through the project.
+
+Install Claude Code first:
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+```bash
+./vibe.sh --acknowledge-unsafe [max_iterations]
+```
+
+The `--acknowledge-unsafe` flag confirms you understand that Vibe bypasses Claude's permission prompts for autonomous operation.
+
+Vibe will:
+1. Read project documentation to understand goals
+2. Scan the repo for TODOs and missing tasks
+3. Update `todo.md` with a prioritized checklist
+4. Implement the top unchecked task
+5. Repeat until every task is complete, then Claude outputs `<promise>COMPLETE</promise>`
+
 ## Key Files
 
 | File | Purpose |
@@ -136,6 +159,9 @@ Ralph will:
 | `ralph.sh` | The bash loop that spawns fresh AI instances (supports `--tool amp` or `--tool claude`) |
 | `prompt.md` | Prompt template for Amp |
 | `CLAUDE.md` | Prompt template for Claude Code |
+| `vibe.sh` | Claude-only Vibe Code loop that uses `VIBE.md` and `todo.md` |
+| `VIBE.md` | Prompt template for Vibe Code (Claude-only) |
+| `todo.md` | Living task list for Vibe Code runs |
 | `prd.json` | User stories with `passes` status (the task list) |
 | `prd.json.example` | Example PRD format for reference |
 | `progress.txt` | Append-only learnings for future iterations |
