@@ -3,6 +3,8 @@ import SwiftUI
 struct AgentCardView: View {
     @Environment(AgentManager.self) private var agentManager
     let agent: Agent
+    
+    @State private var isHovering = false
 
     private var statusColor: Color {
         switch agent.status {
@@ -48,7 +50,7 @@ struct AgentCardView: View {
                         .foregroundStyle(statusColor)
 
                     if agent.isRunning {
-                        Text("Iteration \(agent.iteration)/\(agent.maxIterations)")
+                        Text("iteration \(agent.iteration)/\(agent.maxIterations)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -78,10 +80,23 @@ struct AgentCardView: View {
             }
         }
         .padding()
-        .background(.background, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(statusColor.opacity(0.3), lineWidth: 1)
-        )
+        .background {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(statusColor.opacity(isHovering ? 0.1 : 0.05))
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(.white.opacity(isHovering ? 0.3 : 0.2), lineWidth: 1)
+                }
+                .shadow(color: .black.opacity(isHovering ? 0.15 : 0.1), radius: isHovering ? 10 : 6, y: isHovering ? 4 : 2)
+        }
+        .scaleEffect(isHovering ? 1.01 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovering)
+        .onHover { hovering in
+            isHovering = hovering
+        }
     }
 }

@@ -66,6 +66,24 @@ final class AgentManager {
             scriptPath = (project.path as NSString)
                 .appendingPathComponent("ralph.sh")
             arguments = ["--tool", "claude", "\(project.maxIterations)"]
+        case .playground:
+            scriptPath = (project.path as NSString)
+                .appendingPathComponent("playground.sh")
+            // Pass playground configuration as arguments
+            var playgroundArgs: [String] = []
+            if let lang = project.playgroundLanguage {
+                playgroundArgs += ["--language", lang]
+            }
+            if let framework = project.playgroundFramework {
+                playgroundArgs += ["--framework", framework]
+            }
+            if let stack = project.playgroundStack {
+                playgroundArgs += ["--stack", stack]
+            }
+            if let description = project.playgroundDescription {
+                playgroundArgs += ["--description", description]
+            }
+            arguments = playgroundArgs + ["--iterations", "\(project.maxIterations)"]
         }
 
         process.executableURL = URL(fileURLWithPath: "/bin/bash")

@@ -14,14 +14,14 @@ struct SidebarView: View {
                     showingDashboard = true
                     selectedProjectId = nil
                 } label: {
-                    Label("Dashboard", systemImage: "square.grid.2x2")
+                    Label("dashboard", systemImage: "square.grid.2x2")
                 }
                 .buttonStyle(.plain)
                 .padding(.vertical, 4)
-                .foregroundStyle(showingDashboard ? .accent : .primary)
+                .foregroundStyle(showingDashboard ? Color.accentColor : .primary)
             }
 
-            Section("Projects") {
+            Section("projects") {
                 ForEach(projectStore.projects) { project in
                     let runningCount = agentManager
                         .agentsForProject(project.id)
@@ -35,7 +35,7 @@ struct SidebarView: View {
                             showingDashboard = false
                         }
                         .contextMenu {
-                            Button("Remove", role: .destructive) {
+                            Button("remove", role: .destructive) {
                                 for agent in agentManager.agentsForProject(project.id) {
                                     agentManager.removeAgent(agent)
                                 }
@@ -56,7 +56,7 @@ struct SidebarView: View {
                 Button {
                     showingAddProject = true
                 } label: {
-                    Label("Add Project", systemImage: "plus")
+                    Label("add project", systemImage: "plus")
                 }
             }
         }

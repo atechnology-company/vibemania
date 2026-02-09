@@ -10,10 +10,10 @@ struct DashboardView: View {
                 // Header
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("VibeMania")
+                        Text("vibemania")
                             .font(.largeTitle)
                             .fontWeight(.bold)
-                        Text("Vibe Code Agent Manager")
+                        Text("ai coding agent manager")
                             .font(.title3)
                             .foregroundStyle(.secondary)
                     }
@@ -21,28 +21,28 @@ struct DashboardView: View {
                 }
                 .padding(.horizontal)
 
-                // Stats
+                // Stats with Liquid Glass
                 HStack(spacing: 16) {
                     StatCard(
-                        title: "Projects",
+                        title: "projects",
                         value: "\(projectStore.projects.count)",
                         icon: "folder.fill",
                         color: .blue
                     )
                     StatCard(
-                        title: "Running",
+                        title: "running",
                         value: "\(agentManager.runningAgents.count)",
                         icon: "bolt.fill",
                         color: .green
                     )
                     StatCard(
-                        title: "Total Agents",
+                        title: "total agents",
                         value: "\(agentManager.agents.count)",
                         icon: "cpu",
                         color: .purple
                     )
                     StatCard(
-                        title: "Completed",
+                        title: "completed",
                         value: "\(agentManager.agents.filter { $0.status == .completed }.count)",
                         icon: "checkmark.circle.fill",
                         color: .orange
@@ -53,7 +53,7 @@ struct DashboardView: View {
                 // Active agents
                 if !agentManager.runningAgents.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Active Agents")
+                        Text("active agents")
                             .font(.title2)
                             .fontWeight(.semibold)
                             .padding(.horizontal)
@@ -74,7 +74,7 @@ struct DashboardView: View {
                 )
                 if !recentAgents.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Recent Agents")
+                        Text("recent agents")
                             .font(.title2)
                             .fontWeight(.semibold)
                             .padding(.horizontal)
@@ -94,13 +94,15 @@ struct DashboardView: View {
     }
 }
 
-// MARK: - Stat Card
+// MARK: - Stat Card with Liquid Glass
 
 struct StatCard: View {
     let title: String
     let value: String
     let icon: String
     let color: Color
+    
+    @State private var isHovering = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -117,10 +119,23 @@ struct StatCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(.background, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-        )
+        .background {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(color.opacity(isHovering ? 0.15 : 0.08))
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(.white.opacity(isHovering ? 0.3 : 0.2), lineWidth: 1)
+                }
+                .shadow(color: .black.opacity(isHovering ? 0.15 : 0.1), radius: isHovering ? 10 : 6, y: isHovering ? 4 : 2)
+        }
+        .scaleEffect(isHovering ? 1.02 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovering)
+        .onHover { hovering in
+            isHovering = hovering
+        }
     }
 }

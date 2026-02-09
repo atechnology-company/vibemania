@@ -27,9 +27,9 @@ struct ProjectDetailView: View {
                 LogView(agent: agent)
             } else {
                 ContentUnavailableView(
-                    "Select an Agent",
+                    "select an agent",
                     systemImage: "text.alignleft",
-                    description: Text("Select an agent to view its logs.")
+                    description: Text("select an agent to view its logs")
                 )
             }
         }
@@ -82,7 +82,7 @@ struct ProjectDetailView: View {
                     let agent = agentManager.launchAgent(for: project)
                     selectedAgentId = agent.id
                 } label: {
-                    Label("Launch Agent", systemImage: "play.fill")
+                    Label("launch agent", systemImage: "play.fill")
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.green)
@@ -93,7 +93,7 @@ struct ProjectDetailView: View {
                             agentManager.stopAgent(agent)
                         }
                     } label: {
-                        Label("Stop All", systemImage: "stop.fill")
+                        Label("stop all", systemImage: "stop.fill")
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.red)
@@ -107,9 +107,9 @@ struct ProjectDetailView: View {
     private var agentList: some View {
         if agents.isEmpty {
             ContentUnavailableView(
-                "No Agents",
+                "no agents",
                 systemImage: "bolt.slash",
-                description: Text("Launch an agent to start vibe coding.")
+                description: Text("launch an agent to start vibe coding")
             )
         } else {
             List(selection: $selectedAgentId) {
@@ -118,11 +118,11 @@ struct ProjectDetailView: View {
                         .tag(agent.id)
                         .contextMenu {
                             if agent.isRunning {
-                                Button("Stop") {
+                                Button("stop") {
                                     agentManager.stopAgent(agent)
                                 }
                             }
-                            Button("Remove", role: .destructive) {
+                            Button("remove", role: .destructive) {
                                 agentManager.removeAgent(agent)
                                 if selectedAgentId == agent.id {
                                     selectedAgentId = nil
@@ -196,29 +196,29 @@ struct ProjectSettingsSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("Project Settings")
+            Text("project settings")
                 .font(.title2)
                 .fontWeight(.semibold)
                 .padding()
 
             Form {
-                TextField("Name", text: $name)
-                TextField("Path", text: $path)
-                Picker("Tool", selection: $toolType) {
+                TextField("name", text: $name)
+                TextField("path", text: $path)
+                Picker("tool", selection: $toolType) {
                     ForEach(Project.ToolType.allCases) { type in
                         Text(type.rawValue).tag(type)
                     }
                 }
-                Stepper("Max Iterations: \(maxIterations)", value: $maxIterations, in: 1...100)
+                Stepper("max iterations: \(maxIterations)", value: $maxIterations, in: 1...100)
             }
             .formStyle(.grouped)
             .padding()
 
             HStack {
-                Button("Cancel") { dismiss() }
+                Button("cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
                 Spacer()
-                Button("Save") {
+                Button("save") {
                     var updated = project
                     updated.name = name
                     updated.path = path

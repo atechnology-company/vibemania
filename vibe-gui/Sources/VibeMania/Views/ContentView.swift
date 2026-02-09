@@ -22,9 +22,9 @@ struct ContentView: View {
                 ProjectDetailView(project: project)
             } else {
                 ContentUnavailableView(
-                    "Select a Project",
+                    "select a project",
                     systemImage: "folder",
-                    description: Text("Choose a project from the sidebar or add a new one.")
+                    description: Text("choose a project from the sidebar or add a new one.")
                 )
             }
         }
