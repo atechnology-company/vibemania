@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if ! command -v claude >/dev/null 2>&1; then
-  echo "Error: Claude Code CLI not found. See README for install steps (e.g. 'npm install -g @anthropic-ai/claude-code')."
+  echo "Error: Claude Code CLI not found. See README for the latest install steps."
   exit 1
 fi
 
@@ -65,6 +65,7 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   echo "==============================================================="
 
   set +e
+  # Capture combined output so the completion tag is detected even if emitted on stderr.
   OUTPUT=$(claude --dangerously-skip-permissions --print < "$PROMPT_FILE" 2>&1 | tee /dev/stderr)
   CLAUDE_STATUS=$?
   set -e
@@ -81,6 +82,7 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   fi
 
   echo "Iteration $i complete. Continuing..."
+  # Brief pause to avoid a tight loop and give the CLI a moment between runs.
   sleep 2
 done
 
