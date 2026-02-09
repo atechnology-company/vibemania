@@ -18,6 +18,9 @@ cd flowchart && npm run build
 
 # Run Ralph with Claude Code
 ./ralph.sh --tool claude [max_iterations]
+
+# Run Vibe Code (Claude-only)
+./vibe.sh [max_iterations]
 ```
 
 ## Key Files
@@ -25,6 +28,9 @@ cd flowchart && npm run build
 - `ralph.sh` - The bash loop that spawns fresh AI instances (supports `--tool amp` or `--tool claude`)
 - `prompt.md` - Instructions given to each AMP instance
 -  `CLAUDE.md` - Instructions given to each Claude Code instance
+- `vibe.sh` - Claude-only Vibe Code loop
+- `VIBE.md` - Instructions given to Vibe Code (Claude-only)
+- `todo.md` - Living task list for Vibe Code runs
 - `prd.json.example` - Example PRD format
 - `flowchart/` - Interactive React Flow diagram explaining how Ralph works
 

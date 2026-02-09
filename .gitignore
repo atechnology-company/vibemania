@@ -11,3 +11,7 @@ progress.txt
 
 #Claude
 .claude/
+
+# Node artifacts
+node_modules/
+dist/
