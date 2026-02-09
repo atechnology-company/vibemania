@@ -133,6 +133,12 @@ Ralph will:
 
 Vibe Code is a Claude-only loop that reads the README/docs, discovers the next tasks, and maintains a living `todo.md` as it works through the project.
 
+Install Claude Code first:
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
 ```bash
 ./vibe.sh [max_iterations]
 ```

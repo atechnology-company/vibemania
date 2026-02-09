@@ -56,7 +56,7 @@ EOF
 fi
 
 echo "Starting Vibe Code - Max iterations: $MAX_ITERATIONS"
-echo "Warning: Vibe uses --dangerously-skip-permissions for autonomous operation."
+echo "Warning: --dangerously-skip-permissions bypasses confirmation prompts and grants full access. Use only in trusted repos."
 
 for i in $(seq 1 "$MAX_ITERATIONS"); do
   echo ""
