@@ -20,7 +20,7 @@ while [[ $# -gt 0 ]]; do
       if [[ "$1" =~ ^[0-9]+$ ]]; then
         MAX_ITERATIONS="$1"
       else
-        echo "Error: Invalid argument '$1'. Expected a max iteration count."
+        echo "Error: Invalid argument '$1'. Expected a positive integer for max iterations, or use -h for help."
         exit 1
       fi
       ;;
@@ -34,7 +34,7 @@ if ! command -v claude >/dev/null 2>&1; then
 fi
 
 if [ "$ACK_UNSAFE" != "true" ]; then
-  echo "Error: Vibe uses --dangerously-skip-permissions. Re-run with --acknowledge-unsafe to proceed."
+  echo "Error: Vibe Code uses --dangerously-skip-permissions. Re-run with --acknowledge-unsafe to proceed."
   exit 1
 fi
 
