@@ -92,7 +92,7 @@ final class AgentManager {
         return planner
     }
 
-    private func createFailedAgent(for session: ConversationSession, error: String) -> Agent {
+    func createFailedAgent(for session: ConversationSession, error: String) -> Agent {
         let agent = Agent(
             projectId: session.projectId ?? UUID(),
             projectName: session.title,
@@ -131,9 +131,9 @@ final class AgentManager {
         }
     }
 
-    // MARK: - Private
+    // MARK: - Internal (accessible from extensions)
 
-    private func findVibemaniaScript(from projectPath: String) -> String? {
+    func findVibemaniaScript(from projectPath: String) -> String? {
         let fileManager = FileManager.default
 
         // Check in the project directory first
@@ -162,7 +162,7 @@ final class AgentManager {
         return nil
     }
 
-    private func startProcess(for agent: Agent, project: Project) {
+    func startProcess(for agent: Agent, project: Project) {
         agent.status = .running
         agent.startedAt = Date()
 
@@ -204,14 +204,18 @@ final class AgentManager {
             else { return }
             DispatchQueue.main.async {
                 agent?.logs += output
+
                 // Parse iteration number from vibemania.sh output
-                let regex = try? NSRegularExpression(pattern: #"Iteration (\d+) of"#)
-                let range = NSRange(output.startIndex..., in: output)
-                if let match = regex?.firstMatch(in: output, range: range),
-                    let numRange = Range(match.range(at: 1), in: output),
-                    let num = Int(output[numRange])
-                {
-                    agent?.iteration = num
+                if let iteration = LogParser.extractIteration(from: output) {
+                    agent?.iteration = iteration
+                }
+
+                // Extract modified files for conflict detection
+                let newFiles = LogParser.extractModifiedFiles(from: output)
+                for file in newFiles {
+                    if let agent = agent, !agent.filesModified.contains(file) {
+                        agent.filesModified.append(file)
+                    }
                 }
             }
         }

@@ -14,10 +14,12 @@
 		3111DB4704492E95E8DA1F0A /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AA4BE38E9E1A9151DDE4150 /* LogView.swift */; };
 		34BA3679D8F42909CA264859 /* AgentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F2DA7E0A7934D12470AFB13 /* AgentManager.swift */; };
 		3788D7F5192B91F765A21036 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62B528E4BB5F122C3667DBB0 /* Project.swift */; };
+		3E95042139F5AF6A57F098CA /* TaskParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD6C80CEB2D3E2351C1B838 /* TaskParser.swift */; };
 		3F2E2DCDE4391A76EA7B3449 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD7398CAC2054261F523AE43 /* ChatView.swift */; };
 		5ED412A7B9B4FD18D7DE29D3 /* ConflictWarningBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E98B75F58E6089F0A6D0A9 /* ConflictWarningBanner.swift */; };
 		62490A777B00C30B0277AEA7 /* ConversationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 815359104AA5C319D8B6128C /* ConversationStore.swift */; };
 		6C74FAEBAE285EC2C34300AF /* AgentCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EE764070E3532394202D8C5 /* AgentCardView.swift */; };
+		75EBA5640D26E57264E63835 /* LogParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE8844B6F0737B5C53648D3A /* LogParser.swift */; };
 		8128585B4BBEE7C14C9C7405 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55FC5F0BC11A02A8C928669F /* DashboardView.swift */; };
 		88E4B02A65C079E14BE78123 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D4C76012E24331DD7F1B99 /* WelcomeView.swift */; };
 		8BC130390D63BE41D80286B9 /* ConversationListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6022E3965A560229CC4A8C7D /* ConversationListView.swift */; };
@@ -27,6 +29,7 @@
 		B685274676815DA2FB9B0940 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0826F76F38FB58A0DB75B828 /* SidebarView.swift */; };
 		C85A475B2BBE89489BA10C37 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 917F8A9E40AB84E3A13FC6CC /* ProjectDetailView.swift */; };
 		E9ECECC4023FFD4C6691C17E /* AgentSwarmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CF464F57FD772883A210803 /* AgentSwarmView.swift */; };
+		EAFE796FD314131B347EE2B6 /* AgentManager+SwarmLaunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67563DB9D2C21CA9FDB94C12 /* AgentManager+SwarmLaunch.swift */; };
 		EB112A9CBBA7F5EFF52AB3D7 /* AgentTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3268D2CA100E14AF7DFB456 /* AgentTask.swift */; };
 		F9F9874F5F7B25A4A545CC98 /* AddProjectSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60448F656177E7EEE54686F6 /* AddProjectSheet.swift */; };
 /* End PBXBuildFile section */
@@ -40,15 +43,18 @@
 		6022E3965A560229CC4A8C7D /* ConversationListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationListView.swift; sourceTree = "<group>"; };
 		60448F656177E7EEE54686F6 /* AddProjectSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddProjectSheet.swift; sourceTree = "<group>"; };
 		62B528E4BB5F122C3667DBB0 /* Project.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
+		67563DB9D2C21CA9FDB94C12 /* AgentManager+SwarmLaunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentManager+SwarmLaunch.swift"; sourceTree = "<group>"; };
 		73E700D2426C02073A74FA98 /* VibeManiaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VibeManiaApp.swift; sourceTree = "<group>"; };
 		74A2872B247980B22EA69ACA /* VibeMania.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VibeMania.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		80E98B75F58E6089F0A6D0A9 /* ConflictWarningBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConflictWarningBanner.swift; sourceTree = "<group>"; };
 		815359104AA5C319D8B6128C /* ConversationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationStore.swift; sourceTree = "<group>"; };
 		8AA4BE38E9E1A9151DDE4150 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
+		8CD6C80CEB2D3E2351C1B838 /* TaskParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskParser.swift; sourceTree = "<group>"; };
 		917F8A9E40AB84E3A13FC6CC /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
 		9CF464F57FD772883A210803 /* AgentSwarmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSwarmView.swift; sourceTree = "<group>"; };
 		A3F6B0F751B42F3F0B716BFC /* ChatMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessage.swift; sourceTree = "<group>"; };
 		AD7398CAC2054261F523AE43 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		BE8844B6F0737B5C53648D3A /* LogParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogParser.swift; sourceTree = "<group>"; };
 		D172E0FB4E4ACF4391C454FC /* Agent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Agent.swift; sourceTree = "<group>"; };
 		DD3E3DE3FB42241A26EBF8E1 /* ConversationSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationSession.swift; sourceTree = "<group>"; };
 		E357FE34FFD0F5BC130BB775 /* ProjectStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectStore.swift; sourceTree = "<group>"; };
@@ -117,12 +123,15 @@
 			children = (
 				D172E0FB4E4ACF4391C454FC /* Agent.swift */,
 				2F2DA7E0A7934D12470AFB13 /* AgentManager.swift */,
+				67563DB9D2C21CA9FDB94C12 /* AgentManager+SwarmLaunch.swift */,
 				F3268D2CA100E14AF7DFB456 /* AgentTask.swift */,
 				A3F6B0F751B42F3F0B716BFC /* ChatMessage.swift */,
 				DD3E3DE3FB42241A26EBF8E1 /* ConversationSession.swift */,
 				815359104AA5C319D8B6128C /* ConversationStore.swift */,
+				BE8844B6F0737B5C53648D3A /* LogParser.swift */,
 				62B528E4BB5F122C3667DBB0 /* Project.swift */,
 				E357FE34FFD0F5BC130BB775 /* ProjectStore.swift */,
+				8CD6C80CEB2D3E2351C1B838 /* TaskParser.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -183,6 +192,7 @@
 				F9F9874F5F7B25A4A545CC98 /* AddProjectSheet.swift in Sources */,
 				8F8A64DC1297C49F018597C9 /* Agent.swift in Sources */,
 				6C74FAEBAE285EC2C34300AF /* AgentCardView.swift in Sources */,
+				EAFE796FD314131B347EE2B6 /* AgentManager+SwarmLaunch.swift in Sources */,
 				34BA3679D8F42909CA264859 /* AgentManager.swift in Sources */,
 				E9ECECC4023FFD4C6691C17E /* AgentSwarmView.swift in Sources */,
 				EB112A9CBBA7F5EFF52AB3D7 /* AgentTask.swift in Sources */,
@@ -195,11 +205,13 @@
 				62490A777B00C30B0277AEA7 /* ConversationStore.swift in Sources */,
 				B520820723C1D54CBA42131A /* ConversationView.swift in Sources */,
 				8128585B4BBEE7C14C9C7405 /* DashboardView.swift in Sources */,
+				75EBA5640D26E57264E63835 /* LogParser.swift in Sources */,
 				3111DB4704492E95E8DA1F0A /* LogView.swift in Sources */,
 				3788D7F5192B91F765A21036 /* Project.swift in Sources */,
 				C85A475B2BBE89489BA10C37 /* ProjectDetailView.swift in Sources */,
 				0583CAAD99668AAF0C0E4795 /* ProjectStore.swift in Sources */,
 				B685274676815DA2FB9B0940 /* SidebarView.swift in Sources */,
+				3E95042139F5AF6A57F098CA /* TaskParser.swift in Sources */,
 				260432929BE19C6B0D25FBD6 /* VibeManiaApp.swift in Sources */,
 				88E4B02A65C079E14BE78123 /* WelcomeView.swift in Sources */,
 			);
