@@ -2,6 +2,7 @@
 # Vibe Code - Claude-only autonomous loop
 
 set -e
+set -o pipefail
 
 MAX_ITERATIONS=10
 
@@ -24,7 +25,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if ! command -v claude >/dev/null 2>&1; then
-  echo "Error: Claude Code CLI not found. Install with 'npm install -g @anthropic-ai/claude-code'."
+  echo "Error: Claude Code CLI not found. See README for install steps (e.g. 'npm install -g @anthropic-ai/claude-code')."
   exit 1
 fi
 
@@ -63,7 +64,14 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   echo "  Vibe Iteration $i of $MAX_ITERATIONS"
   echo "==============================================================="
 
-  OUTPUT=$(claude --dangerously-skip-permissions --print < "$PROMPT_FILE" 2>&1 | tee /dev/stderr) || true
+  set +e
+  OUTPUT=$(claude --dangerously-skip-permissions --print < "$PROMPT_FILE" 2>&1 | tee /dev/stderr)
+  CLAUDE_STATUS=$?
+  set -e
+
+  if [ "$CLAUDE_STATUS" -ne 0 ]; then
+    echo "Warning: Claude Code exited with status $CLAUDE_STATUS."
+  fi
 
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
     echo ""

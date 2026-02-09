@@ -39,3 +39,7 @@ You are an autonomous Vibe Code agent running in Claude Code. Your job is to rea
 ```
 
 Keep tasks small and verifiable. If a task is too large, split it into smaller tasks.
+
+## Stop Condition
+
+When every task in `todo.md` is complete, output the exact tag `<promise>COMPLETE</promise>` so the loop knows to exit.
