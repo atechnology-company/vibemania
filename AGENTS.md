@@ -20,7 +20,7 @@ cd flowchart && npm run build
 ./ralph.sh --tool claude [max_iterations]
 
 # Run Vibe Code (Claude-only)
-./vibe.sh [max_iterations]
+./vibe.sh --acknowledge-unsafe [max_iterations]
 ```
 
 ## Key Files

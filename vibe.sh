@@ -5,12 +5,16 @@ set -e
 set -o pipefail
 
 MAX_ITERATIONS=10
+ACK_UNSAFE=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
     -h|--help)
-      echo "Usage: ./vibe.sh [max_iterations]"
+      echo "Usage: ./vibe.sh [--acknowledge-unsafe] [max_iterations]"
       exit 0
+      ;;
+    --acknowledge-unsafe)
+      ACK_UNSAFE=true
       ;;
     *)
       if [[ "$1" =~ ^[0-9]+$ ]]; then
@@ -25,7 +29,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 if ! command -v claude >/dev/null 2>&1; then
-  echo "Error: Claude Code CLI not found. See README for the latest install steps."
+  echo "Error: Claude CLI not found. See README for the latest install steps."
+  exit 1
+fi
+
+if [ "$ACK_UNSAFE" != "true" ]; then
+  echo "Error: Vibe uses --dangerously-skip-permissions. Re-run with --acknowledge-unsafe to proceed."
   exit 1
 fi
 

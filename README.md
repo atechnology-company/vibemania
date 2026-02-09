@@ -140,8 +140,10 @@ npm install -g @anthropic-ai/claude-code
 ```
 
 ```bash
-./vibe.sh [max_iterations]
+./vibe.sh --acknowledge-unsafe [max_iterations]
 ```
+
+The `--acknowledge-unsafe` flag confirms you understand that Vibe bypasses Claude's permission prompts for autonomous operation.
 
 Vibe will:
 1. Read project documentation to understand goals
