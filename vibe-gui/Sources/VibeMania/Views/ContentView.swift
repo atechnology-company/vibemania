@@ -73,4 +73,24 @@ struct ContentView: View {
         }
         .frame(minWidth: 1200, minHeight: 700)
     }
+
+    // MARK: - Command Actions
+
+    private func createNewConversation() {
+        mode = .conversations
+        selectedConversationId = nil
+        showingDashboard = false
+    }
+
+    private func exportCurrentConversation() {
+        // This would need access to the current ConversationView
+        // For now, just a placeholder
+        print("Export conversation action triggered")
+    }
+
+    private func stopAllAgents() {
+        for agent in agentManager.runningAgents {
+            agentManager.stopAgent(agent)
+        }
+    }
 }

@@ -8,11 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		0583CAAD99668AAF0C0E4795 /* ProjectStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E357FE34FFD0F5BC130BB775 /* ProjectStore.swift */; };
+		0E190F2DAB64560A933F0A6D /* TaskMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4CF217D4F96DC0EF837D2F6 /* TaskMonitor.swift */; };
 		0F76D306C1DCFF00FB0191C6 /* ConversationSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3E3DE3FB42241A26EBF8E1 /* ConversationSession.swift */; };
 		23A84CDD196DC5FB7262CF58 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A87B4BE98A38D86D4C2A0F /* ContentView.swift */; };
 		260432929BE19C6B0D25FBD6 /* VibeManiaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E700D2426C02073A74FA98 /* VibeManiaApp.swift */; };
 		3111DB4704492E95E8DA1F0A /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AA4BE38E9E1A9151DDE4150 /* LogView.swift */; };
 		34BA3679D8F42909CA264859 /* AgentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F2DA7E0A7934D12470AFB13 /* AgentManager.swift */; };
+		37645C33111E093B79FBA77D /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AA523C6DE57B54C90916CD3 /* NotificationManager.swift */; };
 		3788D7F5192B91F765A21036 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62B528E4BB5F122C3667DBB0 /* Project.swift */; };
 		3E95042139F5AF6A57F098CA /* TaskParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD6C80CEB2D3E2351C1B838 /* TaskParser.swift */; };
 		3F2E2DCDE4391A76EA7B3449 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD7398CAC2054261F523AE43 /* ChatView.swift */; };
@@ -23,6 +25,7 @@
 		8128585B4BBEE7C14C9C7405 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55FC5F0BC11A02A8C928669F /* DashboardView.swift */; };
 		88E4B02A65C079E14BE78123 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D4C76012E24331DD7F1B99 /* WelcomeView.swift */; };
 		8BC130390D63BE41D80286B9 /* ConversationListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6022E3965A560229CC4A8C7D /* ConversationListView.swift */; };
+		8E9F7B38A5A7C796AFAAA91E /* TaskProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD6B1F31FF851E00B2F5A895 /* TaskProgressView.swift */; };
 		8F8A64DC1297C49F018597C9 /* Agent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D172E0FB4E4ACF4391C454FC /* Agent.swift */; };
 		9CA3A17B16CF2F029EDEA5BC /* ChatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3F6B0F751B42F3F0B716BFC /* ChatMessage.swift */; };
 		B520820723C1D54CBA42131A /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E870BB646EED245DE28E919B /* ConversationView.swift */; };
@@ -36,6 +39,7 @@
 
 /* Begin PBXFileReference section */
 		0826F76F38FB58A0DB75B828 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		1AA523C6DE57B54C90916CD3 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		1EE764070E3532394202D8C5 /* AgentCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentCardView.swift; sourceTree = "<group>"; };
 		2F2DA7E0A7934D12470AFB13 /* AgentManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentManager.swift; sourceTree = "<group>"; };
 		34D4C76012E24331DD7F1B99 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
@@ -53,8 +57,10 @@
 		917F8A9E40AB84E3A13FC6CC /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
 		9CF464F57FD772883A210803 /* AgentSwarmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSwarmView.swift; sourceTree = "<group>"; };
 		A3F6B0F751B42F3F0B716BFC /* ChatMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessage.swift; sourceTree = "<group>"; };
+		AD6B1F31FF851E00B2F5A895 /* TaskProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskProgressView.swift; sourceTree = "<group>"; };
 		AD7398CAC2054261F523AE43 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		BE8844B6F0737B5C53648D3A /* LogParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogParser.swift; sourceTree = "<group>"; };
+		C4CF217D4F96DC0EF837D2F6 /* TaskMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskMonitor.swift; sourceTree = "<group>"; };
 		D172E0FB4E4ACF4391C454FC /* Agent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Agent.swift; sourceTree = "<group>"; };
 		DD3E3DE3FB42241A26EBF8E1 /* ConversationSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationSession.swift; sourceTree = "<group>"; };
 		E357FE34FFD0F5BC130BB775 /* ProjectStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectStore.swift; sourceTree = "<group>"; };
@@ -113,6 +119,7 @@
 				8AA4BE38E9E1A9151DDE4150 /* LogView.swift */,
 				917F8A9E40AB84E3A13FC6CC /* ProjectDetailView.swift */,
 				0826F76F38FB58A0DB75B828 /* SidebarView.swift */,
+				AD6B1F31FF851E00B2F5A895 /* TaskProgressView.swift */,
 				34D4C76012E24331DD7F1B99 /* WelcomeView.swift */,
 			);
 			path = Views;
@@ -129,8 +136,10 @@
 				DD3E3DE3FB42241A26EBF8E1 /* ConversationSession.swift */,
 				815359104AA5C319D8B6128C /* ConversationStore.swift */,
 				BE8844B6F0737B5C53648D3A /* LogParser.swift */,
+				1AA523C6DE57B54C90916CD3 /* NotificationManager.swift */,
 				62B528E4BB5F122C3667DBB0 /* Project.swift */,
 				E357FE34FFD0F5BC130BB775 /* ProjectStore.swift */,
+				C4CF217D4F96DC0EF837D2F6 /* TaskMonitor.swift */,
 				8CD6C80CEB2D3E2351C1B838 /* TaskParser.swift */,
 			);
 			path = Models;
@@ -207,11 +216,14 @@
 				8128585B4BBEE7C14C9C7405 /* DashboardView.swift in Sources */,
 				75EBA5640D26E57264E63835 /* LogParser.swift in Sources */,
 				3111DB4704492E95E8DA1F0A /* LogView.swift in Sources */,
+				37645C33111E093B79FBA77D /* NotificationManager.swift in Sources */,
 				3788D7F5192B91F765A21036 /* Project.swift in Sources */,
 				C85A475B2BBE89489BA10C37 /* ProjectDetailView.swift in Sources */,
 				0583CAAD99668AAF0C0E4795 /* ProjectStore.swift in Sources */,
 				B685274676815DA2FB9B0940 /* SidebarView.swift in Sources */,
+				0E190F2DAB64560A933F0A6D /* TaskMonitor.swift in Sources */,
 				3E95042139F5AF6A57F098CA /* TaskParser.swift in Sources */,
+				8E9F7B38A5A7C796AFAAA91E /* TaskProgressView.swift in Sources */,
 				260432929BE19C6B0D25FBD6 /* VibeManiaApp.swift in Sources */,
 				88E4B02A65C079E14BE78123 /* WelcomeView.swift in Sources */,
 			);

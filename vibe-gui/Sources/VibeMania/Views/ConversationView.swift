@@ -41,7 +41,8 @@ struct ConversationView: View {
                         // Tab selector
                         Picker("View", selection: $selectedTab) {
                             Text("Agents").tag(0)
-                            Text("Logs").tag(1)
+                            Text("Tasks").tag(1)
+                            Text("Logs").tag(2)
                         }
                         .pickerStyle(.segmented)
                         .padding()
@@ -51,6 +52,8 @@ struct ConversationView: View {
                         // Content
                         if selectedTab == 0 {
                             AgentSwarmView(session: session)
+                        } else if selectedTab == 1 {
+                            TaskProgressGridView(tasks: session.tasks)
                         } else {
                             if let agent = selectedAgent {
                                 VStack(spacing: 0) {
