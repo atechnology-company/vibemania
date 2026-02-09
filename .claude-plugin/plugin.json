@@ -1,10 +1,10 @@
 {
-  "name": "ralph-skills",
+  "name": "vibemania-skills",
   "version": "1.0.0",
-  "description": "Skills for the Ralph autonomous agent system - Generate PRDs and convert them to prd.json format for autonomous execution",
+  "description": "Skills for VibeMania - the two-phase autonomous AI development loop",
   "author": {
-    "name": "snarktank"
+    "name": "atechnology-company"
   },
   "skills": "./skills/",
-  "keywords": ["ralph", "prd", "automation", "agent", "planning", "requirements"]
+  "keywords": ["vibemania", "prd", "automation", "agent", "planning", "goals"]
 }

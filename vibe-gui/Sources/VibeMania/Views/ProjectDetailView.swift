@@ -13,7 +13,7 @@ struct ProjectDetailView: View {
 
     var body: some View {
         HSplitView {
-            // Left column — project info + agent list
+            // Left column - project info + agent list
             VStack(spacing: 0) {
                 projectHeader
                 Divider()
@@ -21,9 +21,10 @@ struct ProjectDetailView: View {
             }
             .frame(minWidth: 300, idealWidth: 350)
 
-            // Right column — selected agent logs
+            // Right column - selected agent logs
             if let agentId = selectedAgentId,
-               let agent = agents.first(where: { $0.id == agentId }) {
+                let agent = agents.first(where: { $0.id == agentId })
+            {
                 LogView(agent: agent)
             } else {
                 ContentUnavailableView(
@@ -70,11 +71,13 @@ struct ProjectDetailView: View {
                     .padding(.vertical, 4)
                     .background(.blue.opacity(0.1), in: Capsule())
 
-                Label("\(project.maxIterations) max iterations", systemImage: "arrow.counterclockwise")
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(.purple.opacity(0.1), in: Capsule())
+                Label(
+                    "\(project.maxIterations) max iterations", systemImage: "arrow.counterclockwise"
+                )
+                .font(.caption)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.purple.opacity(0.1), in: Capsule())
             }
 
             HStack {
@@ -109,7 +112,7 @@ struct ProjectDetailView: View {
             ContentUnavailableView(
                 "no agents",
                 systemImage: "bolt.slash",
-                description: Text("launch an agent to start vibe coding")
+                description: Text("launch an agent to start vibing")
             )
         } else {
             List(selection: $selectedAgentId) {
@@ -142,11 +145,11 @@ struct AgentListRow: View {
 
     private var statusColor: Color {
         switch agent.status {
-        case .running:   return .green
+        case .running: return .green
         case .completed: return .blue
-        case .failed:    return .red
-        case .stopped:   return .orange
-        case .idle:      return .gray
+        case .failed: return .red
+        case .stopped: return .orange
+        case .idle: return .gray
         }
     }
 
@@ -164,7 +167,7 @@ struct AgentListRow: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     if agent.isRunning {
-                        Text("• Iteration \(agent.iteration)/\(agent.maxIterations)")
+                        Text("- Iteration \(agent.iteration)/\(agent.maxIterations)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -191,7 +194,7 @@ struct ProjectSettingsSheet: View {
 
     @State private var name: String = ""
     @State private var path: String = ""
-    @State private var toolType: Project.ToolType = .vibe
+    @State private var toolType: Project.ToolType = .claude
     @State private var maxIterations: Int = 10
 
     var body: some View {

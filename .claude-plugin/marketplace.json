@@ -1,19 +1,26 @@
 {
-  "name": "ralph-marketplace",
+  "name": "vibemania-marketplace",
   "owner": {
-    "name": "snarktank"
+    "name": "atechnology-company"
   },
   "metadata": {
-    "description": "Skills for the Ralph autonomous agent system - Generate PRDs and convert them to prd.json format for autonomous execution",
+    "description": "Skills for VibeMania - the two-phase autonomous AI development loop",
     "version": "1.0.0"
   },
   "plugins": [
     {
-      "name": "ralph-skills",
+      "name": "vibemania-skills",
       "source": "./",
-      "description": "PRD generation and conversion skills for the Ralph autonomous agent loop",
+      "description": "Goal-setting and PRD skills for the VibeMania autonomous development loop",
       "version": "1.0.0",
-      "keywords": ["ralph", "prd", "automation", "agent", "planning"],
+      "keywords": [
+        "vibemania",
+        "goals",
+        "prd",
+        "automation",
+        "agent",
+        "planning"
+      ],
       "category": "productivity",
       "skills": "./skills/"
     }

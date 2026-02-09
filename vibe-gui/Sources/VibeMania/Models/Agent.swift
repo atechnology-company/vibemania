@@ -8,6 +8,11 @@ enum AgentStatus: String {
     case stopped = "Stopped"
 }
 
+enum AgentRole: String, Codable {
+    case planner = "planner"
+    case executor = "executor"
+}
+
 @Observable
 final class Agent: Identifiable {
     let id: UUID
@@ -21,6 +26,13 @@ final class Agent: Identifiable {
     var startedAt: Date?
     var endedAt: Date?
 
+    // New properties for Codex-inspired features
+    var role: AgentRole = .executor
+    var taskId: UUID?  // Link to AgentTask
+    var messages: [ChatMessage] = []  // Chat history for this agent
+    var filesModified: [String] = []  // Track changed files
+    var task: AgentTask?  // Computed from taskId, set externally
+
     var process: Process?
     var outputPipe: Pipe?
 
@@ -29,13 +41,15 @@ final class Agent: Identifiable {
         projectId: UUID,
         projectName: String,
         toolType: Project.ToolType,
-        maxIterations: Int
+        maxIterations: Int,
+        role: AgentRole = .executor
     ) {
         self.id = id
         self.projectId = projectId
         self.projectName = projectName
         self.toolType = toolType
         self.maxIterations = maxIterations
+        self.role = role
     }
 
     var isRunning: Bool {

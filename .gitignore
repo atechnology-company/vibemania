@@ -1,17 +1,17 @@
-# Ralph working files (generated during runs)
-prd.json
-progress.txt
-.last-branch
-
-# Archive is optional to commit
-# archive/
+# VibeMania working files (generated during runs)
+.vibemania/
+progress.md
+goals.md
 
 # OS files
 .DS_Store
 
-#Claude
+# Claude
 .claude/
 
-# Node artifacts
-node_modules/
-dist/
+# Xcode
+vibe-gui/VibeMania.xcodeproj/xcuserdata/
+vibe-gui/VibeMania.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Archive is optional to commit
+# archive/

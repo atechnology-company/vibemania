@@ -58,8 +58,41 @@ If not, output your plan for the next step.
 
 ## Important Rules
 
-- Plan ONE task per iteration. Keep it small and focused.
+- Plan ONE task per iteration by default. Keep it small and focused.
 - Be specific. "Improve the UI" is bad. "Add a loading spinner to the /dashboard page using the existing Spinner component" is good.
 - Consider dependencies. Do not plan a UI task if the backend it depends on does not exist yet.
 - Read the codebase before planning. Do not assume -- verify what exists.
 - Each task should be completable in a single AI session.
+
+## Advanced: Multi-Task Planning (Optional)
+
+If you identify 2-5 independent tasks that can run in parallel, you may output
+multiple tasks using this format:
+
+<vibemania_tasks max_parallel="3">
+
+### Task 1: [Title]
+#### Why This Is Next
+...
+#### Detailed Instructions
+...
+#### Files Affected
+- src/components/Auth.tsx
+- src/lib/auth.ts
+#### Acceptance Criteria
+...
+#### Quality Checks
+...
+
+### Task 2: [Title]
+...
+
+### Task 3: [Title]
+...
+
+</vibemania_tasks>
+
+**Rules for parallel tasks:**
+- Ensure tasks don't modify the same files (avoid conflicts)
+- Only use this for truly independent work
+- If tasks must be sequential, output ONE task

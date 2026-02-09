@@ -1,278 +1,191 @@
-# Ralph
+# vibemania
 
-![Ralph](ralph.webp)
+vibemania is a two-phase autonomous AI development loop. Instead of running the same prompt repeatedly, vibemania uses one AI to **plan** what to do next, then feeds that plan to a second AI to **execute** it. Memory persists across iterations via `progress.md` and git history.
 
-Ralph is an autonomous AI agent loop that runs AI coding tools ([Amp](https://ampcode.com) or [Claude Code](https://docs.anthropic.com/en/docs/claude-code)) repeatedly until all PRD items are complete. Each iteration is a fresh instance with clean context. Memory persists via git history, `progress.txt`, and `prd.json`.
+## Credits
 
-Based on [Geoffrey Huntley's Ralph pattern](https://ghuntley.com/ralph/).
+Based on [snarktank/ralph](https://github.com/snarktank/ralph) by [Geoffrey Huntley](https://ghuntley.com/ralph/) and [Ryan Carson](https://x.com/ryancarson). vibemania extends the Ralph pattern with a two-phase plan/execute loop and automatic language detection.
+## How It Works
 
-[Read my in-depth article on how I use Ralph](https://x.com/ryancarson/status/2008548371712135632)
+Each iteration has two phases:
+
+1. **Planner AI** reads your `goals.md`, the `progress.md` log, and the codebase. It decides the single most impactful next change and outputs a detailed plan.
+2. **Executor AI** receives that plan in a fresh session and implements it -- writes code, runs quality checks, commits, and logs progress.
+
+The loop repeats until all goals are achieved.
+
+```
+goals.md + progress.md
+        |
+    [Planner AI]  -->  "Add priority badges to task cards"
+        |
+    [Executor AI]  -->  writes code, runs tests, commits
+        |
+    progress.md updated
+        |
+    (repeat until done)
+```
 
 ## Prerequisites
 
-- One of the following AI coding tools installed and authenticated:
-  - [Amp CLI](https://ampcode.com) (default)
-  - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`npm install -g @anthropic-ai/claude-code`)
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`npm install -g @anthropic-ai/claude-code`) or [Amp CLI](https://ampcode.com)
 - `jq` installed (`brew install jq` on macOS)
 - A git repository for your project
 
-## Setup
+## Quick Start
 
-### Option 1: Copy to your project
+### 1. Create goals.md
 
-Copy the ralph files into your project:
+Create a `goals.md` file in your project root describing what you want to build:
+
+```markdown
+# Project Goals
+
+## What We Are Building
+A task management API with priority levels and filtering.
+
+## Specific Goals
+- [ ] Add priority field (high/medium/low) to tasks table
+- [ ] Create GET /api/tasks endpoint with priority filter
+- [ ] Add priority badge component to task cards
+- [ ] Add priority filter dropdown to task list
+
+## Constraints
+- Use existing Express router pattern
+- Follow existing React component patterns
+
+## Quality Requirements
+- npm run typecheck must pass
+- npm test must pass
+```
+
+See `goals.md.example` for the full template.
+
+### 2. Run VibeMania
 
 ```bash
-# From your project root
-mkdir -p scripts/ralph
-cp /path/to/ralph/ralph.sh scripts/ralph/
-
-# Copy the prompt template for your AI tool of choice:
-cp /path/to/ralph/prompt.md scripts/ralph/prompt.md    # For Amp
-# OR
-cp /path/to/ralph/CLAUDE.md scripts/ralph/CLAUDE.md    # For Claude Code
-
-chmod +x scripts/ralph/ralph.sh
+# Copy vibemania.sh to your project (or run from the vibemania directory)
+./vibemania.sh
 ```
 
-### Option 2: Install skills globally (Amp)
-
-Copy the skills to your Amp or Claude config for use across all projects:
-
-For AMP
-```bash
-cp -r skills/prd ~/.config/amp/skills/
-cp -r skills/ralph ~/.config/amp/skills/
-```
-
-For Claude Code (manual)
-```bash
-cp -r skills/prd ~/.claude/skills/
-cp -r skills/ralph ~/.claude/skills/
-```
-
-### Option 3: Use as Claude Code Marketplace
-
-Add the Ralph marketplace to Claude Code:
+Options:
 
 ```bash
-/plugin marketplace add snarktank/ralph
+./vibemania.sh --tool claude     # Use Claude Code (default)
+./vibemania.sh --tool amp        # Use Amp
+./vibemania.sh 20                # Run up to 20 iterations (default: 10)
+./vibemania.sh --project-dir ./my-app   # Target a specific directory
 ```
 
-Then install the skills:
+VibeMania will:
+1. Detect your project's tech stack automatically
+2. Ask the Planner AI what to work on next
+3. Feed the plan to the Executor AI to implement
+4. Log progress and repeat until all goals are met
 
-```bash
-/plugin install ralph-skills@ralph-marketplace
-```
+## Language Detection
 
-Available skills after installation:
-- `/prd` - Generate Product Requirements Documents
-- `/ralph` - Convert PRDs to prd.json format
+VibeMania automatically detects your project's tech stack by checking for:
 
-Skills are automatically invoked when you ask Claude to:
-- "create a prd", "write prd for", "plan this feature"
-- "convert this prd", "turn into ralph format", "create prd.json"
+| Marker File | Detected Stack |
+|---|---|
+| `package.json` | Node.js |
+| `tsconfig.json` | TypeScript |
+| `Cargo.toml` | Rust |
+| `go.mod` | Go |
+| `requirements.txt` / `pyproject.toml` | Python |
+| `Gemfile` | Ruby |
+| `pom.xml` / `build.gradle` | Java |
+| `composer.json` | PHP |
+| `mix.exs` | Elixir |
+| `Package.swift` | Swift |
+| `pubspec.yaml` | Dart/Flutter |
+| `next.config.js` | Next.js |
+| `vite.config.ts` | Vite |
+| And more... | |
 
-### Configure Amp auto-handoff (recommended)
-
-Add to `~/.config/amp/settings.json`:
-
-```json
-{
-  "amp.experimental.autoHandoff": { "context": 90 }
-}
-```
-
-This enables automatic handoff when context fills up, allowing Ralph to handle large stories that exceed a single context window.
-
-## Workflow
-
-### 1. Create a PRD
-
-Use the PRD skill to generate a detailed requirements document:
-
-```
-Load the prd skill and create a PRD for [your feature description]
-```
-
-Answer the clarifying questions. The skill saves output to `tasks/prd-[feature-name].md`.
-
-### 2. Convert PRD to Ralph format
-
-Use the Ralph skill to convert the markdown PRD to JSON:
-
-```
-Load the ralph skill and convert tasks/prd-[feature-name].md to prd.json
-```
-
-This creates `prd.json` with user stories structured for autonomous execution.
-
-### 3. Run Ralph
-
-```bash
-# Using Amp (default)
-./scripts/ralph/ralph.sh [max_iterations]
-
-# Using Claude Code
-./scripts/ralph/ralph.sh --tool claude [max_iterations]
-```
-
-Default is 10 iterations. Use `--tool amp` or `--tool claude` to select your AI coding tool.
-
-Ralph will:
-1. Create a feature branch (from PRD `branchName`)
-2. Pick the highest priority story where `passes: false`
-3. Implement that single story
-4. Run quality checks (typecheck, tests)
-5. Commit if checks pass
-6. Update `prd.json` to mark story as `passes: true`
-7. Append learnings to `progress.txt`
-8. Repeat until all stories pass or max iterations reached
-
-## Vibe Code (Claude-only)
-
-Vibe Code is a Claude-only loop that reads the README/docs, discovers the next tasks, and maintains a living `todo.md` as it works through the project.
-
-Install Claude Code first:
-
-```bash
-npm install -g @anthropic-ai/claude-code
-```
-
-```bash
-./vibe.sh --acknowledge-unsafe [max_iterations]
-```
-
-The `--acknowledge-unsafe` flag confirms you understand that Vibe bypasses Claude's permission prompts for autonomous operation.
-
-Vibe will:
-1. Read project documentation to understand goals
-2. Scan the repo for TODOs and missing tasks
-3. Update `todo.md` with a prioritized checklist
-4. Implement the top unchecked task
-5. Repeat until every task is complete, then Claude outputs `<promise>COMPLETE</promise>`
+The detected stack is passed to both the planner and executor so they suggest and run appropriate quality checks (e.g., `cargo test` for Rust, `npm run lint` for Node).
 
 ## Key Files
 
 | File | Purpose |
-|------|---------|
-| `ralph.sh` | The bash loop that spawns fresh AI instances (supports `--tool amp` or `--tool claude`) |
-| `prompt.md` | Prompt template for Amp |
-| `CLAUDE.md` | Prompt template for Claude Code |
-| `vibe.sh` | Claude-only Vibe Code loop that uses `VIBE.md` and `todo.md` |
-| `VIBE.md` | Prompt template for Vibe Code (Claude-only) |
-| `todo.md` | Living task list for Vibe Code runs |
-| `prd.json` | User stories with `passes` status (the task list) |
-| `prd.json.example` | Example PRD format for reference |
-| `progress.txt` | Append-only learnings for future iterations |
-| `skills/prd/` | Skill for generating PRDs (works with Amp and Claude Code) |
-| `skills/ralph/` | Skill for converting PRDs to JSON (works with Amp and Claude Code) |
-| `.claude-plugin/` | Plugin manifest for Claude Code marketplace discovery |
-| `flowchart/` | Interactive visualization of how Ralph works |
-| `vibe-gui/` | Native macOS GUI for managing Vibe Code agents in parallel |
+|---|---|
+| `vibemania.sh` | Main two-phase loop script |
+| `prompts/planner.md` | Prompt template for the planning phase |
+| `prompts/executor.md` | Prompt template for the execution phase |
+| `goals.md` | Your project goals (create from `goals.md.example`) |
+| `goals.md.example` | Template for goals file |
+| `progress.md` | Append-only log of what was done each iteration |
+| `.vibemania/` | Working directory (plans, detected stack, temp files) |
+| `skills/prd/` | Skill for generating PRDs |
+| `skills/vibemania/` | Skill for setting up goals.md |
+| `vibe-gui/` | Native macOS SwiftUI app for managing VibeMania runs |
 
-## VibeMania GUI (macOS)
+## Skills
 
-A native macOS application for managing multiple Vibe Code agents in parallel — on the same project or across separate projects. Built with SwiftUI and generated via XcodeGen.
+VibeMania includes skills for AI coding tools:
 
+- `/prd` - Generate a Product Requirements Document
+- `/vibemania` - Set up `goals.md` for your project interactively
+
+### Install skills globally
+
+For Claude Code:
 ```bash
-cd vibe-gui
-xcodegen generate
-open VibeMania.xcodeproj
+cp -r skills/prd ~/.claude/skills/
+cp -r skills/vibemania ~/.claude/skills/
 ```
 
-See [`vibe-gui/README.md`](vibe-gui/README.md) for full setup and feature documentation.
-
-## Flowchart
-
-[![Ralph Flowchart](ralph-flowchart.png)](https://snarktank.github.io/ralph/)
-
-**[View Interactive Flowchart](https://snarktank.github.io/ralph/)** - Click through to see each step with animations.
-
-The `flowchart/` directory contains the source code. To run locally:
-
+For Amp:
 ```bash
-cd flowchart
-npm install
-npm run dev
+cp -r skills/prd ~/.config/amp/skills/
+cp -r skills/vibemania ~/.config/amp/skills/
 ```
 
-## Critical Concepts
+## macOS App
 
-### Each Iteration = Fresh Context
+The `vibe-gui/` directory contains a native macOS SwiftUI application for managing VibeMania runs. It provides:
 
-Each iteration spawns a **new AI instance** (Amp or Claude Code) with clean context. The only memory between iterations is:
-- Git history (commits from previous iterations)
-- `progress.txt` (learnings and context)
-- `prd.json` (which stories are done)
+- Dashboard for monitoring active agent runs
+- Project management with sidebar navigation
+- Real-time log viewer for agent output
+- Agent lifecycle management (start/stop/monitor)
 
-### Small Tasks
+Requires macOS 14.0+ and Xcode. Open `vibe-gui/VibeMania.xcodeproj` to build and run.
 
-Each PRD item should be small enough to complete in one context window. If a task is too big, the LLM runs out of context before finishing and produces poor code.
+## How VibeMania Differs from Ralph
 
-Right-sized stories:
-- Add a database column and migration
-- Add a UI component to an existing page
-- Update a server action with new logic
-- Add a filter dropdown to a list
-
-Too big (split these):
-- "Build the entire dashboard"
-- "Add authentication"
-- "Refactor the API"
-
-### AGENTS.md Updates Are Critical
-
-After each iteration, Ralph updates the relevant `AGENTS.md` files with learnings. This is key because AI coding tools automatically read these files, so future iterations (and future human developers) benefit from discovered patterns, gotchas, and conventions.
-
-Examples of what to add to AGENTS.md:
-- Patterns discovered ("this codebase uses X for Y")
-- Gotchas ("do not forget to update Z when changing W")
-- Useful context ("the settings panel is in component X")
-
-### Feedback Loops
-
-Ralph only works if there are feedback loops:
-- Typecheck catches type errors
-- Tests verify behavior
-- CI must stay green (broken code compounds across iterations)
-
-### Browser Verification for UI Stories
-
-Frontend stories must include "Verify in browser using dev-browser skill" in acceptance criteria. Ralph will use the dev-browser skill to navigate to the page, interact with the UI, and confirm changes work.
-
-### Stop Condition
-
-When all stories have `passes: true`, Ralph outputs `<promise>COMPLETE</promise>` and the loop exits.
+| | Ralph | VibeMania |
+|---|---|---|
+| **Loop type** | Single-phase: same static prompt every iteration | Two-phase: planner decides, executor implements |
+| **Task source** | `prd.json` with pre-defined user stories | `goals.md` with freeform goals; AI plans dynamically |
+| **What to work on** | AI reads PRD and picks next incomplete story | Planner AI analyzes the full project and decides |
+| **Language awareness** | None - prompt is static | Auto-detects project stack and adapts quality checks |
+| **Progress tracking** | `progress.txt` + `prd.json` status | `progress.md` read by planner each iteration |
 
 ## Debugging
 
-Check current state:
-
 ```bash
-# See which stories are done
-cat prd.json | jq '.userStories[] | {id, title, passes}'
+# See what the planner suggested last
+cat .vibemania/plan.md
 
-# See learnings from previous iterations
-cat progress.txt
+# See progress so far
+cat progress.md
+
+# See detected tech stack
+cat .vibemania/stack.txt
 
 # Check git history
 git log --oneline -10
 ```
 
-## Customizing the Prompt
+## License
 
-After copying `prompt.md` (for Amp) or `CLAUDE.md` (for Claude Code) to your project, customize it for your project:
-- Add project-specific quality check commands
-- Include codebase conventions
-- Add common gotchas for your stack
-
-## Archiving
-
-Ralph automatically archives previous runs when you start a new feature (different `branchName`). Archives are saved to `archive/YYYY-MM-DD-feature-name/`.
+Licensed under the [Mozilla Public License 2.0](https://www.mozilla.org/en-US/MPL/2.0/). See [LICENSE](LICENSE) for the full text.
 
 ## References
 
+- [snarktank/ralph](https://github.com/snarktank/ralph) - The original autonomous AI agent loop
 - [Geoffrey Huntley's Ralph article](https://ghuntley.com/ralph/)
-- [Amp documentation](https://ampcode.com/manual)
 - [Claude Code documentation](https://docs.anthropic.com/en/docs/claude-code)
+- [Amp documentation](https://ampcode.com/manual)

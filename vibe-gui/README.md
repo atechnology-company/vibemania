@@ -1,6 +1,6 @@
 # VibeMania GUI
 
-A native macOS application for managing Vibe Code agents. Run multiple AI coding agents in parallel on the same project or across separate projects.
+A native macOS application for managing VibeMania agents. Run multiple AI coding agents in parallel on the same project or across separate projects.
 
 ## Requirements
 
@@ -8,8 +8,8 @@ A native macOS application for managing Vibe Code agents. Run multiple AI coding
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`)
 - Xcode 15+
 - One or more AI coding tools installed:
-  - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) for Vibe Code and Ralph (Claude)
-  - [Amp CLI](https://ampcode.com) for Ralph (Amp)
+  - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (default)
+  - [Amp CLI](https://ampcode.com)
 
 ## Setup
 
@@ -30,7 +30,7 @@ open VibeMania.xcodeproj
 
 ### 3. Build & Run
 
-Press **⌘R** in Xcode or build from the command line:
+Press **Cmd+R** in Xcode or build from the command line:
 
 ```bash
 xcodebuild -project VibeMania.xcodeproj -scheme VibeMania -configuration Debug build
@@ -40,7 +40,7 @@ xcodebuild -project VibeMania.xcodeproj -scheme VibeMania -configuration Debug b
 
 ### Project Management
 - Add projects by browsing to any local directory
-- Configure tool type per project: **Vibe Code**, **Ralph (Amp)**, or **Ralph (Claude)**
+- Configure tool type per project: **VibeMania (Claude)** or **VibeMania (Amp)**
 - Set max iterations per project
 - Edit or remove projects at any time
 
@@ -82,18 +82,20 @@ Sources/VibeMania/
 
 ### Key Design Decisions
 
-- **SwiftUI + `@Observable`** — Modern reactive state management (macOS 14+)
-- **`NavigationSplitView`** — Native sidebar + detail layout
-- **`Process` / `Pipe`** — Spawns `vibe.sh` or `ralph.sh` as child processes
-- **No sandbox** — Required for file system access and process spawning
-- **XcodeGen** — Generates `.xcodeproj` from `project.yml`; the Xcode project is gitignored
-- **JSON persistence** — Projects saved to `~/Library/Application Support/VibeMania/`
+- **SwiftUI + `@Observable`** -- Modern reactive state management (macOS 14+)
+- **`NavigationSplitView`** -- Native sidebar + detail layout
+- **`Process` / `Pipe`** -- Spawns `vibemania.sh` as child processes
+- **No sandbox** -- Required for file system access and process spawning
+- **XcodeGen** -- Generates `.xcodeproj` from `project.yml`; the Xcode project is gitignored
+- **JSON persistence** -- Projects saved to `~/Library/Application Support/VibeMania/`
 
 ## How It Works
 
-1. **Add a project** — Point VibeMania at any directory containing `vibe.sh` or `ralph.sh`
-2. **Choose a tool** — Select Vibe Code, Ralph (Amp), or Ralph (Claude)
-3. **Launch agents** — Click "Launch Agent" to start a vibe coding session
-4. **Monitor progress** — Watch real-time output in the log viewer
-5. **Run in parallel** — Launch additional agents on the same or different projects
-6. **Stop when done** — Stop individual agents or all agents for a project
+1. **Add a project** -- Point VibeMania at any project directory
+2. **Choose a tool** -- Select VibeMania (Claude) or VibeMania (Amp)
+3. **Launch agents** -- Click "Launch Agent" to start an autonomous coding session
+4. **Monitor progress** -- Watch real-time output in the log viewer
+5. **Run in parallel** -- Launch additional agents on the same or different projects
+6. **Stop when done** -- Stop individual agents or all agents for a project
+
+The app finds `vibemania.sh` in your project directory (or common install locations) and runs it with the `--tool` and `--project-dir` flags matching your project settings.

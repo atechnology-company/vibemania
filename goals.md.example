@@ -1,0 +1,16 @@
+# Project Goals
+
+## What We Are Building
+[Describe the end state of your project in a paragraph or two]
+
+## Specific Goals
+- [ ] Goal 1: [Description of what needs to be built or changed]
+- [ ] Goal 2: [Description]
+- [ ] Goal 3: [Description]
+
+## Constraints
+- [Any technical constraints, e.g., "Must use PostgreSQL", "No new dependencies"]
+- [Style constraints, e.g., "Follow existing code patterns", "Use Tailwind for styling"]
+
+## Quality Requirements
+- [e.g., "All tests must pass", "TypeScript strict mode", "No lint warnings"]

@@ -1,53 +1,38 @@
-# Ralph Agent Instructions
+# VibeMania Agent Instructions
 
 ## Overview
 
-Ralph is an autonomous AI agent loop that runs AI coding tools (Amp or Claude Code) repeatedly until all PRD items are complete. Each iteration is a fresh instance with clean context.
+VibeMania is a two-phase autonomous AI development loop. A planner AI decides what to do next, then an executor AI implements it. Each iteration spawns fresh AI instances with clean context.
 
 ## Commands
 
 ```bash
-# Run the flowchart dev server
-cd flowchart && npm run dev
+# Run VibeMania with Claude Code (default)
+./vibemania.sh
 
-# Build the flowchart
-cd flowchart && npm run build
+# Run VibeMania with Amp
+./vibemania.sh --tool amp
 
-# Run Ralph with Amp (default)
-./ralph.sh [max_iterations]
+# Run with custom iterations and project directory
+./vibemania.sh --tool claude --project-dir ./my-project 20
 
-# Run Ralph with Claude Code
-./ralph.sh --tool claude [max_iterations]
-
-# Run Vibe Code (Claude-only)
-./vibe.sh --acknowledge-unsafe [max_iterations]
+# Build the macOS app
+cd vibe-gui && xcodegen generate && open VibeMania.xcodeproj
 ```
 
 ## Key Files
 
-- `ralph.sh` - The bash loop that spawns fresh AI instances (supports `--tool amp` or `--tool claude`)
-- `prompt.md` - Instructions given to each AMP instance
--  `CLAUDE.md` - Instructions given to each Claude Code instance
-- `vibe.sh` - Claude-only Vibe Code loop
-- `VIBE.md` - Instructions given to Vibe Code (Claude-only)
-- `todo.md` - Living task list for Vibe Code runs
-- `prd.json.example` - Example PRD format
-- `flowchart/` - Interactive React Flow diagram explaining how Ralph works
-
-## Flowchart
-
-The `flowchart/` directory contains an interactive visualization built with React Flow. It's designed for presentations - click through to reveal each step with animations.
-
-To run locally:
-```bash
-cd flowchart
-npm install
-npm run dev
-```
+- `vibemania.sh` - The main two-phase loop script
+- `prompts/planner.md` - Prompt template for the planning phase
+- `prompts/executor.md` - Prompt template for the execution phase
+- `goals.md.example` - Template for project goals
+- `vibe-gui/` - Native macOS SwiftUI app for managing runs
 
 ## Patterns
 
-- Each iteration spawns a fresh AI instance (Amp or Claude Code) with clean context
-- Memory persists via git history, `progress.txt`, and `prd.json`
-- Stories should be small enough to complete in one context window
-- Always update AGENTS.md with discovered patterns for future iterations
+- Each iteration spawns fresh AI instances (planner + executor) with clean context
+- The planner reads `goals.md` and `progress.md` to decide what to work on
+- The executor receives a specific plan and implements it
+- Memory persists via git history and `progress.md`
+- The detected tech stack is passed to both phases for appropriate quality checks
+- Goals should be small enough that each can be achieved in 1-3 iterations
