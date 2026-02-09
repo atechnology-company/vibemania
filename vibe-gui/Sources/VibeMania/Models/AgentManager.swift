@@ -85,17 +85,12 @@ final class AgentManager {
                   let output = String(data: data, encoding: .utf8) else { return }
             DispatchQueue.main.async {
                 agent?.logs += output
-                if let match = output.range(
-                    of: #"Iteration (\d+) of"#,
-                    options: .regularExpression
-                ) {
-                    let numStr = output[match]
-                        .split(separator: " ")
-                        .compactMap { Int($0) }
-                        .first
-                    if let num = numStr {
-                        agent?.iteration = num
-                    }
+                let regex = try? NSRegularExpression(pattern: #"Iteration (\d+) of"#)
+                let range = NSRange(output.startIndex..., in: output)
+                if let match = regex?.firstMatch(in: output, range: range),
+                   let numRange = Range(match.range(at: 1), in: output),
+                   let num = Int(output[numRange]) {
+                    agent?.iteration = num
                 }
             }
         }
