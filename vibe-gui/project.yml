@@ -1,0 +1,27 @@
+name: VibeMania
+options:
+  bundleIdPrefix: com.vibemania
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+targets:
+  VibeMania:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/VibeMania
+    resources:
+      - Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vibemania.app
+        GENERATE_INFOPLIST_FILE: true
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: "5.9"
+        CODE_SIGN_ENTITLEMENTS: VibeMania.entitlements
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
+        INFOPLIST_KEY_CFBundleDisplayName: VibeMania
+        ENABLE_PREVIEWS: true

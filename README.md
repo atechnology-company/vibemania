@@ -169,6 +169,19 @@ Vibe will:
 | `skills/ralph/` | Skill for converting PRDs to JSON (works with Amp and Claude Code) |
 | `.claude-plugin/` | Plugin manifest for Claude Code marketplace discovery |
 | `flowchart/` | Interactive visualization of how Ralph works |
+| `vibe-gui/` | Native macOS GUI for managing Vibe Code agents in parallel |
+
+## VibeMania GUI (macOS)
+
+A native macOS application for managing multiple Vibe Code agents in parallel — on the same project or across separate projects. Built with SwiftUI and generated via XcodeGen.
+
+```bash
+cd vibe-gui
+xcodegen generate
+open VibeMania.xcodeproj
+```
+
+See [`vibe-gui/README.md`](vibe-gui/README.md) for full setup and feature documentation.
 
 ## Flowchart
 
