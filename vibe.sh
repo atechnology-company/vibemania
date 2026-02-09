@@ -29,7 +29,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if ! command -v claude >/dev/null 2>&1; then
-  echo "Error: Claude CLI not found. See README for the latest install steps."
+  echo "Error: Claude CLI not found. See README.md (Vibe Code section) for install steps."
   exit 1
 fi
 
