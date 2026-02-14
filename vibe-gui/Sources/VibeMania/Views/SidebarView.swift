@@ -6,6 +6,8 @@ struct SidebarView: View {
     @Binding var selectedProjectId: UUID?
     @Binding var showingDashboard: Bool
     @Binding var showingAddProject: Bool
+    
+    @State private var isProjectsSectionHovered = false
 
     var body: some View {
         List(selection: $selectedProjectId) {
@@ -21,7 +23,34 @@ struct SidebarView: View {
                 .foregroundStyle(showingDashboard ? Color.accentColor : .primary)
             }
 
-            Section("projects") {
+            Section {
+                HStack {
+                    Text("projects")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+                    
+                    Spacer()
+                    
+                    Button {
+                        showingAddProject = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.plain)
+                    .opacity(isProjectsSectionHovered ? 1.0 : 0.0)
+                    .animation(.easeInOut(duration: 0.2), value: isProjectsSectionHovered)
+                    .help("Add Project")
+                }
+                .padding(.vertical, 4)
+                .onHover { hovering in
+                    isProjectsSectionHovered = hovering
+                }
+                
                 ForEach(projectStore.projects) { project in
                     let runningCount = agentManager
                         .agentsForProject(project.id)
