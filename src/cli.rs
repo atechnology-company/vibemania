@@ -43,6 +43,18 @@ pub enum Commands {
         command: SwarmCommands,
     },
 
+    /// Show and manage tasks in subspace.md
+    Tasks {
+        #[arg(long)]
+        project_dir: Option<String>,
+        /// Add a new task
+        #[arg(long)]
+        add: Option<String>,
+        /// Priority: critical, high, medium, low, nice
+        #[arg(long, default_value = "medium")]
+        priority: String,
+    },
+
     /// Show project status
     Status {
         #[arg(long)]
