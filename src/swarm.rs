@@ -12,7 +12,7 @@ use crate::project::{self, Project};
 use crate::worktree;
 
 /// Run the full plan/execute/merge loop
-pub async fn run_loop(proj: &Project, goal: &str, max_iter: u32, parallel: u32) -> Result<()> {
+pub async fn run_loop(proj: &Project, goal: Option<&str>, max_iter: u32, parallel: u32) -> Result<()> {
     acp::find_acp_binary()?;
 
     let session_name = project::session_name(&proj.dir);
@@ -21,7 +21,7 @@ pub async fn run_loop(proj: &Project, goal: &str, max_iter: u32, parallel: u32) 
     println!("{}", "═══════════════════════════════════════════".bold());
     println!("  {} {}", "Subspace".bold().cyan(), "— Agent Swarm");
     println!("{}", "═══════════════════════════════════════════".bold());
-    println!("Goal:       {}", goal.white().bold());
+    println!("Goal:       {}", goal.unwrap_or("autonomous (discover → audit → complete)").white().bold());
     println!("Project:    {}", proj.dir.display().to_string().cyan());
     println!("Stack:      {}", proj.stack.yellow());
     println!("Base:       {}", base_branch.green());
@@ -198,15 +198,15 @@ You're in an isolated git worktree — other agents can't see your changes.
     Ok(())
 }
 
-/// Launch agents for a goal (no loop — plan once, execute, wait for merge command)
-pub async fn launch(proj: &Project, goal: &str, agent_count: u32) -> Result<()> {
+/// Launch agents (no loop — plan once, execute, wait for merge command)
+pub async fn launch(proj: &Project, goal: Option<&str>, agent_count: u32) -> Result<()> {
     acp::find_acp_binary()?;
     let base_branch = worktree::current_branch(&proj.dir)?;
     let session_name = project::session_name(&proj.dir);
     let subspace_dir = proj.dir.join(".subspace");
     std::fs::create_dir_all(&subspace_dir)?;
 
-    println!("{} Planning for: {}", "🧠", goal.bold());
+    println!("{} Planning for: {}", "🧠", goal.unwrap_or("autonomous discovery").bold());
     let planner_prompt = planner::build_prompt(proj, goal, 1);
     let plan = acp::run_prompt(&proj.dir, &planner_prompt).await?;
     let tasks = planner::parse_tasks(&plan.text);
@@ -405,6 +405,34 @@ fn detect_conflicts(state: &SwarmState) -> Vec<(String, Vec<String>)> {
         .map(|(f, mut a)| { a.sort(); a.dedup(); (f, a) })
         .filter(|(_, a)| a.len() > 1)
         .collect()
+}
+
+/// Merge completed agent branches
+pub async fn merge(project_dir: &std::path::Path) -> Result<()> {
+    let state = config::load_state(project_dir)?;
+    let state = match state {
+        Some(s) => s,
+        None => { println!("No active swarm."); return Ok(()); }
+    };
+
+    let base = worktree::current_branch(project_dir)?;
+    let completed: Vec<String> = state.agents.iter()
+        .filter(|a| a.role == AgentRole::Executor && a.status == AgentStatus::Completed)
+        .map(|a| a.id.clone()).collect();
+
+    if completed.is_empty() { println!("No completed agents."); return Ok(()); }
+
+    let subspace_dir = project_dir.join(".subspace");
+    let prompt = build_merge_prompt(
+        &crate::project::load_or_init(project_dir)?,
+        &base, &completed, &subspace_dir,
+    )?;
+
+    println!("Merging {} branch(es) with Haiku...", completed.len());
+    let r = acp::run_prompt(project_dir, &prompt).await?;
+    std::fs::write(subspace_dir.join("merger-output.md"), &r.text)?;
+    println!("{} Merge done", "✓".green());
+    Ok(())
 }
 
 fn truncate(s: &str, max: usize) -> &str {

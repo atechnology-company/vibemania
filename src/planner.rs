@@ -1,87 +1,142 @@
-use anyhow::Result;
 use regex::Regex;
 
 use crate::project::Project;
 
-/// Build the planner prompt — planner manages progress tracking
-pub fn build_prompt(proj: &Project, goal: &str, iteration: u32) -> String {
+/// Build the planner prompt — autonomous discovery + audit + roadmap
+pub fn build_prompt(proj: &Project, goal: Option<&str>, iteration: u32) -> String {
     let progress = if proj.progress.is_empty() || proj.progress == "No progress yet." {
-        "This is the first iteration. No progress yet.".to_string()
+        "First iteration — no prior progress.".to_string()
     } else {
         proj.progress.clone()
     };
 
+    let goal_section = match goal {
+        Some(g) => format!("## Explicit Goal\n\n{}\n\nUse this as your PRIMARY focus, but still audit the full project.", g),
+        None => "## Goal: Autonomous Completion\n\nNo explicit goal given. Your job is to take this project from its current state to 95% complete.".to_string(),
+    };
+
     format!(
-        r#"# Subspace Planner Agent
+        r#"# Subspace Planner — Autonomous Project Engine
 
-You are the PLANNING phase of Subspace, an AI coding agent swarm orchestrator.
-This is iteration {iteration}. Detected project stack: {stack}.
+You are the brain of Subspace, an AI swarm that takes projects from 0% to 95%.
+This is iteration {iteration}. Stack: {stack}.
 
-## The Goal
+{goal_section}
 
-{goal}
+## Phase 1: Discovery (DO THIS FIRST)
+
+Read and understand the project by checking these files (if they exist):
+- `CLAUDE.md` / `.claude/instructions.md` — Claude Code agent instructions
+- `.copilot-instructions.md` / `.github/copilot-instructions.md` — Copilot context
+- `GEMINI.md` / `.gemini/instructions.md` — Gemini context
+- `README.md` — Project overview, setup, architecture
+- `TODO.md` / `TODO` — Existing task lists
+- `ROADMAP.md` — Project roadmap
+- `CHANGELOG.md` — What's been done
+- `package.json` / `Cargo.toml` / `pyproject.toml` — Dependencies, scripts
+- `goals.md` — Prior Subspace goals (if any)
+- `.github/ISSUES_TEMPLATE/` — What issues look like
+- Source code structure (`src/`, `lib/`, `app/`, etc.)
+- Test directories (`tests/`, `__tests__/`, `spec/`)
+- Config files (CI, linting, formatting)
+
+Synthesize ALL of this into your understanding of the project.
+
+## Phase 2: Audit
+
+Analyze the project's current state:
+1. **Completeness** — What features exist vs what's described/planned?
+2. **Quality** — Do tests pass? Are there linting errors? Type errors?
+3. **Gaps** — Missing tests, missing error handling, missing docs?
+4. **Broken things** — Compile errors, failing tests, dead code?
+5. **Architecture** — Is the structure sound? Any anti-patterns?
+6. **Dependencies** — Outdated? Vulnerable? Missing?
+7. **CI/CD** — Is it set up? Does it work?
+8. **Documentation** — README up to date? API docs? Comments?
+
+Run actual commands to verify:
+- Build/compile the project
+- Run the test suite
+- Run linters
+- Check for type errors
+
+## Phase 3: Roadmap & Task Planning
+
+Based on your discovery and audit:
+
+1. Estimate current completion percentage
+2. Create a prioritized roadmap of what's needed to reach 95%
+3. Break the next chunk into PARALLEL tasks for executor agents
+
+Priority order:
+1. 🔴 Fix broken things (won't compile, tests fail)
+2. 🟠 Complete core features (what the project is supposed to do)
+3. 🟡 Add missing tests & error handling
+4. 🟢 Documentation, polish, CI/CD
+5. 🔵 Nice-to-haves, optimization
 
 ## Progress So Far
 
 {progress}
 
-## Your Job
+## Output Format
 
-1. Read the project's current state (check files, git log, etc.)
-2. Compare against the goal
-3. If the goal is FULLY achieved: output `<subspace>COMPLETE</subspace>` and nothing else
-4. Otherwise: output specific, actionable tasks for executor agents
+### Project Assessment
+- **Name:** [project name]
+- **Description:** [what it does]
+- **Current State:** [% complete, key observations]
+- **Critical Issues:** [anything broken]
 
-## First Iteration Tasks
+### Roadmap to 95%
+1. [Phase 1 — what, why, est. effort]
+2. [Phase 2 — ...]
+3. [Phase 3 — ...]
 
-If this is iteration 1, also:
-- Create/update `progress.md` with the goal and initial state
-- Set up any scaffolding needed
+### This Iteration's Tasks
 
-## Task Output Format
+If DONE: output `<subspace>COMPLETE</subspace>`
 
-For a SINGLE task:
-### Task Title
-[one-line summary]
-### Why This Is Next
-[brief reasoning]
-### Detailed Instructions
-[step-by-step for an AI developer]
-### Files Affected
-- path/to/file1
-- path/to/file2
-### Quality Checks
-[commands to verify]
+If tasks remain, output them:
 
-For MULTIPLE parallel tasks:
-<subspace_tasks max_parallel="3">
+<subspace_tasks max_parallel="N">
 
-### Task 1: Title
-#### Why This Is Next
-...
-#### Detailed Instructions
-...
+### Task 1: [Title]
+#### Priority: 🔴/🟠/🟡/🟢/🔵
+#### What
+[specific instructions]
 #### Files Affected
-- file1
-- file2
+- path/to/file
 #### Quality Checks
-...
+[commands to run]
 
-### Task 2: Title
+### Task 2: [Title]
 ...
 
 </subspace_tasks>
 
+### Progress Update
+
+Write this to `progress.md`:
+```
+## Iteration {iteration}
+Date: [today]
+Assessment: [current state]
+Completed: [what was done]
+Next: [what's planned]
+```
+
 ## Rules
 
-- Plan tasks that can run IN PARALLEL (no shared files between tasks)
-- Be SPECIFIC: "Add auth middleware to src/auth.rs" not "improve auth"
-- Each task must be completable by one agent in isolation
-- List ALL files each task will touch (for conflict avoidance)
-- If tasks MUST be sequential, output only ONE task"#,
+- ALWAYS do discovery first — read the project's own docs
+- Respect existing agent instructions (CLAUDE.md etc.)
+- Tasks must be PARALLELIZABLE (no shared files)
+- Be SPECIFIC — "Add error handling to src/api/users.rs lines 45-80" not "improve error handling"
+- Each task must list ALL files it touches
+- Don't rewrite working code — fix and extend
+- If the project is already at 95%+, say COMPLETE"#,
         iteration = iteration,
         stack = proj.stack,
-        goal = goal,
+        goal_section = goal_section,
         progress = progress,
     )
 }
@@ -94,7 +149,6 @@ pub struct PlannedTask {
     pub files: Vec<String>,
 }
 
-/// Parse planner output into tasks
 pub fn parse_tasks(output: &str) -> Vec<PlannedTask> {
     if output.contains("<subspace_tasks") || output.contains("<vibemania_tasks") {
         parse_multi_tasks(output)
@@ -108,7 +162,6 @@ pub fn parse_tasks(output: &str) -> Vec<PlannedTask> {
     }
 }
 
-/// Check if planner says we're done
 pub fn is_complete(output: &str) -> bool {
     output.contains("<subspace>COMPLETE</subspace>")
         || output.contains("<vibemania>COMPLETE</vibemania>")
@@ -147,7 +200,7 @@ fn extract_title(output: &str) -> String {
         if trimmed.starts_with("### ") && !trimmed.contains("Task ") {
             return trimmed.trim_start_matches("### ").to_string();
         }
-        if trimmed.starts_with("## ") {
+        if trimmed.starts_with("## ") && !trimmed.contains("Phase") && !trimmed.contains("Progress") && !trimmed.contains("Rules") {
             return trimmed.trim_start_matches("## ").to_string();
         }
     }
@@ -157,7 +210,6 @@ fn extract_title(output: &str) -> String {
 fn extract_files(content: &str) -> Vec<String> {
     let mut files = Vec::new();
     let mut in_files_section = false;
-
     for line in content.lines() {
         let trimmed = line.trim();
         if trimmed.contains("Files Affected") || trimmed.contains("Files to Modify") {
@@ -166,18 +218,12 @@ fn extract_files(content: &str) -> Vec<String> {
         }
         if in_files_section {
             if trimmed.starts_with("- ") || trimmed.starts_with("* ") {
-                let file = trimmed
-                    .trim_start_matches("- ")
-                    .trim_start_matches("* ")
-                    .trim()
-                    .to_string();
+                let file = trimmed.trim_start_matches("- ").trim_start_matches("* ").trim().to_string();
                 if !file.is_empty() && (file.contains('/') || file.contains('.')) {
                     files.push(file);
                 }
             } else if trimmed.starts_with('#') || trimmed.is_empty() {
-                if !files.is_empty() {
-                    in_files_section = false;
-                }
+                if !files.is_empty() { in_files_section = false; }
             }
         }
     }

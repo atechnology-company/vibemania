@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "subspace", version, about = "AI coding agent swarm orchestrator")]
+#[command(name = "subspace", version, about = "Autonomous AI project completion engine — takes projects from 0% to 95%")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
@@ -9,24 +9,24 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Initialize a project for Subspace (creates .subspace/)
+    /// Initialize .subspace/ in a project
     Init {
         #[arg(long)]
         project_dir: Option<String>,
     },
 
-    /// Run planner only — output tasks without executing
+    /// Audit & plan only — show what the swarm would do
     Plan {
-        /// Goal to plan for
-        goal: String,
+        /// Optional focus goal (omit for autonomous discovery)
+        goal: Option<String>,
         #[arg(long)]
         project_dir: Option<String>,
     },
 
-    /// Full plan/execute/merge loop
+    /// Full autonomous loop: discover → audit → plan → execute → merge → repeat
     Run {
-        /// What to build (the goal)
-        goal: String,
+        /// Optional focus goal (omit to let the planner decide)
+        goal: Option<String>,
         #[arg(long)]
         project_dir: Option<String>,
         /// Max iterations (default: 10)
@@ -48,37 +48,29 @@ pub enum Commands {
         #[arg(long)]
         project_dir: Option<String>,
     },
-
-    /// Show file conflicts between agents
-    Conflicts {
-        #[arg(long)]
-        project_dir: Option<String>,
-    },
 }
 
 #[derive(Subcommand)]
 pub enum SwarmCommands {
-    /// Launch parallel agents for a goal
+    /// Launch agents (plan once, execute, wait for merge)
     Launch {
-        /// What to build
-        goal: String,
+        /// Optional focus goal
+        goal: Option<String>,
         #[arg(long)]
         project_dir: Option<String>,
-        /// Number of executor agents (default: 3)
         #[arg(long, default_value = "3")]
         agents: u32,
     },
 
-    /// Show all agents and their status
+    /// Show agent status
     Status,
 
     /// View agent output
     Logs {
-        /// Agent ID (e.g. executor-1)
         agent_id: String,
     },
 
-    /// Merge completed agent branches (Haiku)
+    /// Merge completed branches (Haiku)
     Merge {
         #[arg(long)]
         project_dir: Option<String>,
