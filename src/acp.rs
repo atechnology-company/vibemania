@@ -1,9 +1,8 @@
 //! ACP (Agent Client Protocol) integration for Subspace.
-//! Spawns claude-agent-acp as a subprocess and communicates via structured JSON-RPC.
-//! Auto-approves all permission requests (bypass mode).
+//! Spawns claude-agent-acp as subprocess, structured JSON-RPC, auto-approves all permissions.
 
 use agent_client_protocol as acp;
-use acp::Agent as _; // bring trait methods into scope
+use acp::Agent as _;
 use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -36,7 +35,6 @@ impl acp::Client for SubspaceClient {
         &self,
         args: acp::RequestPermissionRequest,
     ) -> acp::Result<acp::RequestPermissionResponse> {
-        // Auto-approve everything — pick the first "allow always" or "allow once" option
         let option_id = args
             .options
             .iter()
@@ -64,11 +62,8 @@ impl acp::Client for SubspaceClient {
         let mut output = self.output.lock().await;
         match args.update {
             acp::SessionUpdate::AgentMessageChunk(chunk) => {
-                match chunk.content {
-                    acp::ContentBlock::Text(text) => {
-                        output.text.push_str(&text.text);
-                    }
-                    _ => {}
+                if let acp::ContentBlock::Text(text) = chunk.content {
+                    output.text.push_str(&text.text);
                 }
             }
             acp::SessionUpdate::ToolCall(tc) => {
@@ -95,8 +90,7 @@ impl acp::Client for SubspaceClient {
     ) -> acp::Result<acp::WriteTextFileResponse> {
         let mut output = self.output.lock().await;
         output.files_modified.push(args.path.to_string_lossy().to_string());
-
-        if let Err(_e) = std::fs::write(&args.path, &args.content) {
+        if std::fs::write(&args.path, &args.content).is_err() {
             return Err(acp::Error::internal_error());
         }
         Ok(acp::WriteTextFileResponse::new())
@@ -108,7 +102,7 @@ impl acp::Client for SubspaceClient {
     ) -> acp::Result<acp::ReadTextFileResponse> {
         match std::fs::read_to_string(&args.path) {
             Ok(content) => Ok(acp::ReadTextFileResponse::new(content)),
-            Err(_e) => Err(acp::Error::internal_error()),
+            Err(_) => Err(acp::Error::internal_error()),
         }
     }
 
@@ -122,7 +116,7 @@ impl acp::Client for SubspaceClient {
 }
 
 /// Find the claude-agent-acp binary
-fn find_acp_binary() -> Result<PathBuf> {
+pub fn find_acp_binary() -> Result<PathBuf> {
     if let Ok(output) = std::process::Command::new("which").arg("claude-agent-acp").output() {
         if output.status.success() {
             let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
@@ -131,20 +125,51 @@ fn find_acp_binary() -> Result<PathBuf> {
             }
         }
     }
-
     let home = std::env::var("HOME").unwrap_or_default();
     let npm_path = PathBuf::from(&home).join(".npm-global/bin/claude-agent-acp");
     if npm_path.exists() {
         return Ok(npm_path);
     }
-
-    anyhow::bail!(
-        "claude-agent-acp not found. Install it:\n  npm install -g @zed-industries/claude-agent-acp"
-    );
+    anyhow::bail!("claude-agent-acp not found. Install: npm install -g @zed-industries/claude-agent-acp");
 }
 
-/// Run a prompt through ACP with full permission bypass
+/// Managed ACP connection — holds a live session with claude-agent-acp
+pub struct AcpSession {
+    output: Arc<Mutex<SessionOutput>>,
+    session_id: String,
+    // Connection lives in a LocalSet, we communicate via channels
+}
+
+/// Run a prompt in a dedicated thread (ACP client is !Send)
+pub fn run_prompt_blocking(cwd: &Path, prompt: &str) -> Result<SessionOutput> {
+    let cwd = cwd.to_path_buf();
+    let prompt = prompt.to_string();
+    std::thread::spawn(move || {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()?;
+        rt.block_on(run_prompt_inner(&cwd, &prompt))
+    })
+    .join()
+    .map_err(|_| anyhow::anyhow!("Agent thread panicked"))?
+}
+
+/// Run a single prompt through ACP and return structured output
 pub async fn run_prompt(cwd: &Path, prompt: &str) -> Result<SessionOutput> {
+    let cwd = cwd.to_path_buf();
+    let prompt = prompt.to_string();
+    tokio::task::spawn_blocking(move || {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()?;
+        rt.block_on(run_prompt_inner(&cwd, &prompt))
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!("Agent task failed: {}", e))?
+}
+
+/// Inner implementation (runs on a single-threaded runtime with LocalSet)
+async fn run_prompt_inner(cwd: &Path, prompt: &str) -> Result<SessionOutput> {
     let acp_binary = find_acp_binary()?;
     let output = Arc::new(Mutex::new(SessionOutput::default()));
 
@@ -158,7 +183,6 @@ pub async fn run_prompt(cwd: &Path, prompt: &str) -> Result<SessionOutput> {
 
     let stdin = child.stdin.take().unwrap().compat_write();
     let stdout = child.stdout.take().unwrap().compat();
-
     let session_output = output.clone();
     let cwd = cwd.to_path_buf();
     let prompt = prompt.to_string();
@@ -169,31 +193,24 @@ pub async fn run_prompt(cwd: &Path, prompt: &str) -> Result<SessionOutput> {
             let client = SubspaceClient {
                 output: session_output.clone(),
             };
-
             let (conn, handle_io) =
                 acp::ClientSideConnection::new(client, stdin, stdout, |fut| {
                     tokio::task::spawn_local(fut);
                 });
-
             tokio::task::spawn_local(handle_io);
 
-            // Initialize
-            let init_req = acp::InitializeRequest::new(acp::ProtocolVersion::V1)
-                .client_info(acp::Implementation::new("subspace", env!("CARGO_PKG_VERSION")));
+            conn.initialize(
+                acp::InitializeRequest::new(acp::ProtocolVersion::V1)
+                    .client_info(acp::Implementation::new("subspace", env!("CARGO_PKG_VERSION"))),
+            )
+            .await?;
 
-            conn.initialize(init_req).await?;
+            let session = conn.new_session(acp::NewSessionRequest::new(&cwd)).await?;
 
-            // Create session
-            let session = conn
-                .new_session(acp::NewSessionRequest::new(&cwd))
-                .await?;
-
-            // Send prompt
-            let prompt_content = acp::ContentBlock::Text(acp::TextContent::new(&prompt));
             let result = conn
                 .prompt(acp::PromptRequest::new(
                     session.session_id.clone(),
-                    vec![prompt_content],
+                    vec![acp::ContentBlock::Text(acp::TextContent::new(&prompt))],
                 ))
                 .await;
 
@@ -207,7 +224,6 @@ pub async fn run_prompt(cwd: &Path, prompt: &str) -> Result<SessionOutput> {
                     out.stop_reason = Some(format!("error: {}", e));
                 }
             }
-
             drop(child);
             Ok::<(), anyhow::Error>(())
         })
