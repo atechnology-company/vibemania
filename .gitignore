@@ -15,3 +15,9 @@ vibe-gui/VibeMania.xcodeproj/project.xcworkspace/xcuserdata/
 
 # Archive is optional to commit
 # archive/
+
+
+# Added by cargo
+
+/target
+/target/
