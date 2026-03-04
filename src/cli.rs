@@ -25,7 +25,7 @@ pub enum Commands {
         tool: Option<String>,
     },
 
-    /// Full plan/execute loop
+    /// Full plan/execute loop (worktree-isolated agents + Sonnet merger)
     Run {
         #[arg(long)]
         project_dir: Option<String>,
@@ -61,7 +61,7 @@ pub enum Commands {
 
 #[derive(Subcommand)]
 pub enum SwarmCommands {
-    /// Launch parallel agent swarm
+    /// Launch parallel agent swarm (each in its own worktree)
     Launch {
         #[arg(long)]
         project_dir: Option<String>,
@@ -100,5 +100,17 @@ pub enum SwarmCommands {
         /// Kill all agents
         #[arg(long)]
         all: bool,
+    },
+
+    /// Merge all completed agent branches using Sonnet
+    Merge {
+        #[arg(long)]
+        project_dir: Option<String>,
+    },
+
+    /// Clean up worktrees and agent branches
+    Clean {
+        #[arg(long)]
+        project_dir: Option<String>,
     },
 }

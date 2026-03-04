@@ -4,6 +4,7 @@ use crate::agent;
 use crate::config::{AgentRole, TaskInfo};
 use crate::planner::PlannedTask;
 use crate::project::Project;
+use crate::worktree;
 
 const EXECUTOR_TEMPLATE: &str = include_str!("../prompts/executor.md");
 
@@ -26,15 +27,22 @@ pub fn write_prompt(proj: &Project, task: &PlannedTask) -> Result<String> {
     Ok(path.to_string_lossy().to_string())
 }
 
-/// Spawn an executor agent for a task
+/// Spawn an executor agent in its own worktree
 pub fn spawn_executor(
     session: &str,
     proj: &Project,
     task: &PlannedTask,
     tool: &str,
-) -> Result<String> {
-    let prompt_file = write_prompt(proj, task)?;
+    base_branch: &str,
+) -> Result<(String, String)> {
     let agent_id = format!("executor-{}", task.id);
+
+    // Create isolated worktree for this agent
+    let worktree_dir = worktree::create(&proj.dir, &agent_id, base_branch)?;
+    let worktree_path = worktree_dir.to_string_lossy().to_string();
+
+    // Write prompt (to main .subspace dir so it's accessible)
+    let prompt_file = write_prompt(proj, task)?;
 
     let task_info = TaskInfo {
         title: task.title.clone(),
@@ -47,9 +55,9 @@ pub fn spawn_executor(
         AgentRole::Executor,
         tool,
         &prompt_file,
-        &proj.dir.to_string_lossy(),
+        &worktree_path,
         Some(task_info),
     )?;
 
-    Ok(agent_id)
+    Ok((agent_id, worktree_path))
 }

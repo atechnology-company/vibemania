@@ -7,6 +7,8 @@ mod swarm;
 mod project;
 mod conflict;
 mod config;
+mod worktree;
+mod merger;
 
 use anyhow::Result;
 use clap::Parser;
@@ -56,6 +58,15 @@ async fn main() -> Result<()> {
                 } else {
                     eprintln!("Specify an agent ID or --all");
                 }
+            }
+            SwarmCommands::Merge { project_dir } => {
+                let dir = project::resolve_dir(project_dir)?;
+                let proj = project::load(&dir)?;
+                merger::run_merge(&proj).await?;
+            }
+            SwarmCommands::Clean { project_dir } => {
+                let dir = project::resolve_dir(project_dir)?;
+                swarm::clean(&dir)?;
             }
         },
         Commands::Status { project_dir } => {

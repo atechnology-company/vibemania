@@ -1,20 +1,24 @@
 use anyhow::Result;
 use chrono::Utc;
 use colored::*;
+use std::path::Path;
 
 use crate::agent;
 use crate::config::{self, AgentRole, AgentState, AgentStatus, SwarmState};
 use crate::conflict;
 use crate::executor;
+use crate::merger;
 use crate::planner;
 use crate::project::{self, Project};
 use crate::tmux;
+use crate::worktree;
 
-/// Run the full plan/execute loop
+/// Run the full plan/execute/merge loop
 pub async fn run_loop(proj: &Project, max_iter: u32, parallel: u32, tool: &str) -> Result<()> {
     tmux::check_tmux()?;
 
     let session = project::session_name(&proj.dir);
+    let base_branch = worktree::current_branch(&proj.dir)?;
 
     println!("{}", "═══════════════════════════════════════".bold());
     println!("  {} {}", "Subspace".bold().cyan(), "— Agent Swarm");
@@ -22,8 +26,11 @@ pub async fn run_loop(proj: &Project, max_iter: u32, parallel: u32, tool: &str) 
     println!("Tool:       {}", tool.yellow());
     println!("Project:    {}", proj.dir.display().to_string().cyan());
     println!("Stack:      {}", proj.stack.yellow());
+    println!("Base:       {}", base_branch.green());
     println!("Parallel:   {}", parallel);
     println!("Iterations: {}", max_iter);
+    println!("Isolation:  {}", "git worktrees".green());
+    println!("Merger:     {}", "Sonnet (auto)".blue());
     println!();
 
     let mut state = SwarmState::new(
@@ -68,7 +75,6 @@ pub async fn run_loop(proj: &Project, max_iter: u32, parallel: u32, tool: &str) 
 
         let plan_output = agent::get_output(&session, "planner", 500)?;
 
-        // Update planner status
         if let Some(p) = state.agents.iter_mut().find(|a| a.id == "planner") {
             p.status = AgentStatus::Completed;
             p.finished_at = Some(Utc::now());
@@ -89,26 +95,27 @@ pub async fn run_loop(proj: &Project, max_iter: u32, parallel: u32, tool: &str) 
         let task_count = tasks.len().min(parallel as usize);
 
         println!(
-            "Planner produced {} task(s), running {} in parallel",
+            "Planner produced {} task(s), spawning {} in worktrees",
             tasks.len(),
             task_count
         );
 
-        // Phase B: Execution
+        // Phase B: Execution (each agent in its own worktree)
         println!();
-        println!("{}", "── Phase B: Execution ──".dimmed());
+        println!("{}", "── Phase B: Execution (worktree-isolated) ──".dimmed());
 
-        // Reload project to get fresh progress
         let proj = project::load(&proj.dir)?;
-
         let mut executor_ids = Vec::new();
+
         for task in tasks.iter().take(task_count) {
+            let (eid, wt_path) = executor::spawn_executor(&session, &proj, task, tool, &base_branch)?;
             println!(
-                "  {} Spawning executor for: {}",
+                "  {} {} → {} (worktree: {})",
                 "→".green(),
-                task.title.cyan()
+                eid.bold(),
+                task.title.cyan(),
+                wt_path.dimmed()
             );
-            let eid = executor::spawn_executor(&session, &proj, task, tool)?;
 
             state.agents.push(AgentState {
                 id: eid.clone(),
@@ -155,23 +162,36 @@ pub async fn run_loop(proj: &Project, max_iter: u32, parallel: u32, tool: &str) 
                 a.finished_at = Some(Utc::now());
             }
         }
-
-        // Phase C: Conflict detection
-        let conflicts = conflict::detect(&state);
-        if !conflicts.is_empty() {
-            println!();
-            println!(
-                "{} {} file conflict(s) detected!",
-                "⚠".red(),
-                conflicts.len()
-            );
-            for c in &conflicts {
-                println!("  {} — {}", c.file.yellow(), c.agents.join(", "));
-            }
-        }
-        state.conflicts = conflicts;
-
         config::save_state(&proj.dir, &state)?;
+
+        // Phase C: Merge with Sonnet
+        println!();
+        println!("{}", "── Phase C: Merge (Sonnet) ──".dimmed());
+
+        let completed: Vec<String> = executor_ids.clone();
+        if !completed.is_empty() {
+            for id in &completed {
+                let diff = worktree::diff_from_base(&proj.dir, id, &base_branch)?;
+                println!("  {} subspace/{}", "📝".to_string(), id);
+                for line in diff.lines().take(5) {
+                    println!("     {}", line.dimmed());
+                }
+            }
+
+            let merger_id = merger::spawn_merger(&session, &proj, &base_branch, &completed)?;
+
+            // Wait for merger
+            loop {
+                tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+                if agent::is_done(&session, &merger_id)? || !agent::is_running(&session, &merger_id) {
+                    break;
+                }
+                print!(".");
+            }
+            println!();
+            println!("  {} Merge complete", "✓".green());
+        }
+
         println!("{}", format!("── Iteration {} complete ──", i).dimmed());
     }
 
@@ -184,12 +204,18 @@ pub async fn run_loop(proj: &Project, max_iter: u32, parallel: u32, tool: &str) 
     Ok(())
 }
 
-/// Launch a swarm of agents for the current plan
+/// Launch a swarm (worktree-isolated agents)
 pub async fn launch(proj: &Project, agent_count: u32, tool: &str) -> Result<()> {
     tmux::check_tmux()?;
 
     let session = project::session_name(&proj.dir);
-    println!("Launching {} executor agents in tmux session: {}", agent_count, session.green());
+    let base_branch = worktree::current_branch(&proj.dir)?;
+
+    println!("{}", "═══ Subspace Swarm Launch ═══".bold());
+    println!("Agents:     {}", agent_count);
+    println!("Base:       {}", base_branch.green());
+    println!("Isolation:  {}", "git worktrees".green());
+    println!();
 
     // Run planner first
     let prompt_file = planner::write_prompt(proj, 1)?;
@@ -221,8 +247,8 @@ pub async fn launch(proj: &Project, agent_count: u32, tool: &str) -> Result<()> 
 
     let spawn_count = tasks.len().min(agent_count as usize);
     for task in tasks.iter().take(spawn_count) {
-        let eid = executor::spawn_executor(&session, proj, task, tool)?;
-        println!("  {} {} — {}", "✓".green(), eid, task.title.cyan());
+        let (eid, wt_path) = executor::spawn_executor(&session, proj, task, tool, &base_branch)?;
+        println!("  {} {} — {} ({})", "✓".green(), eid, task.title.cyan(), wt_path.dimmed());
 
         state.agents.push(AgentState {
             id: eid.clone(),
@@ -241,7 +267,11 @@ pub async fn launch(proj: &Project, agent_count: u32, tool: &str) -> Result<()> 
 
     config::save_state(&proj.dir, &state)?;
     println!();
-    println!("Swarm running. Use {} to monitor.", "subspace swarm status".bold());
+    println!("Swarm running in worktrees. Commands:");
+    println!("  {} swarm status           — see agent status", "subspace".bold());
+    println!("  {} swarm logs executor-1   — tail output", "subspace".bold());
+    println!("  {} swarm merge             — merge with Sonnet", "subspace".bold());
+    println!("  {} swarm clean             — remove worktrees", "subspace".bold());
     Ok(())
 }
 
@@ -275,16 +305,21 @@ pub async fn status() -> Result<()> {
                     };
 
                     let role = match a.role {
-                        AgentRole::Planner => "🧠 planner".to_string(),
-                        AgentRole::Executor => "🔨 executor".to_string(),
+                        AgentRole::Planner => "🧠",
+                        AgentRole::Executor => "🔨",
                     };
 
-                    println!("  {} {} [{}]", a.id.bold(), role, status_str);
+                    println!("  {} {} [{}]", role, a.id.bold(), status_str);
                     if let Some(task) = &a.task {
                         println!("    Task: {}", task.title.cyan());
                         if !task.files.is_empty() {
                             println!("    Files: {}", task.files.join(", ").dimmed());
                         }
+                    }
+
+                    // Show worktree branch info for executors
+                    if a.role == AgentRole::Executor {
+                        println!("    Branch: {}", format!("subspace/{}", a.id).dimmed());
                     }
                 }
             }
@@ -366,5 +401,20 @@ pub async fn kill_all() -> Result<()> {
     config::save_state(&dir, &state)?;
 
     println!("{} Killed all agents in session {}", "✗".red(), state.session_name);
+    Ok(())
+}
+
+/// Clean up worktrees and branches
+pub fn clean(project_dir: &Path) -> Result<()> {
+    println!("Cleaning up worktrees and subspace branches...");
+    worktree::remove_all(project_dir)?;
+
+    // Also remove state
+    let state_path = project_dir.join(".subspace").join("state.json");
+    if state_path.exists() {
+        std::fs::remove_file(&state_path)?;
+    }
+
+    println!("{} Cleaned up all worktrees and branches", "✓".green());
     Ok(())
 }
