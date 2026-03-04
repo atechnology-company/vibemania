@@ -117,10 +117,10 @@ impl SubspaceFile {
                             description: trimmed[6..].trim().to_string(),
                             done: false,
                         });
-                    } else if trimmed.starts_with("- ") {
+                    } else if let Some(stripped) = trimmed.strip_prefix("- ") {
                         sf.roadmap.push(RoadmapItem {
                             phase: String::new(),
-                            description: trimmed[2..].trim().to_string(),
+                            description: stripped.trim().to_string(),
                             done: false,
                         });
                     }
@@ -142,8 +142,10 @@ impl SubspaceFile {
                             description: String::new(),
                         });
                     } else if let Some(ref mut t) = task_buf {
-                        if trimmed.starts_with("- ") && (trimmed.contains('/') || trimmed.contains('.')) {
-                            t.files.push(trimmed[2..].trim().to_string());
+                        if let Some(stripped) = trimmed.strip_prefix("- ") {
+                            if stripped.contains('/') || stripped.contains('.') {
+                                t.files.push(stripped.trim().to_string());
+                            }
                         } else if trimmed.contains("🔴") || trimmed.to_lowercase().contains("critical") {
                             t.priority = TaskPriority::Critical;
                         } else if trimmed.contains("🟠") || trimmed.to_lowercase().contains("high") {
@@ -159,8 +161,8 @@ impl SubspaceFile {
                     }
                 }
                 "completed" => {
-                    if trimmed.starts_with("- ") {
-                        sf.completed.push(trimmed[2..].trim().to_string());
+                    if let Some(stripped) = trimmed.strip_prefix("- ") {
+                        sf.completed.push(stripped.trim().to_string());
                     }
                 }
                 "notes" => {
@@ -285,14 +287,14 @@ fn extract_value(line: &str) -> String {
 }
 
 fn parse_task_header(raw: &str) -> (TaskStatus, String) {
-    if raw.starts_with("[x]") || raw.starts_with("[X]") {
-        (TaskStatus::Done, raw[3..].trim().to_string())
-    } else if raw.starts_with("[~]") {
-        (TaskStatus::InProgress, raw[3..].trim().to_string())
-    } else if raw.starts_with("[-]") {
-        (TaskStatus::Skipped, raw[3..].trim().to_string())
-    } else if raw.starts_with("[ ]") {
-        (TaskStatus::Todo, raw[3..].trim().to_string())
+    if let Some(stripped) = raw.strip_prefix("[x]").or_else(|| raw.strip_prefix("[X]")) {
+        (TaskStatus::Done, stripped.trim().to_string())
+    } else if let Some(stripped) = raw.strip_prefix("[~]") {
+        (TaskStatus::InProgress, stripped.trim().to_string())
+    } else if let Some(stripped) = raw.strip_prefix("[-]") {
+        (TaskStatus::Skipped, stripped.trim().to_string())
+    } else if let Some(stripped) = raw.strip_prefix("[ ]") {
+        (TaskStatus::Todo, stripped.trim().to_string())
     } else {
         (TaskStatus::Todo, raw.to_string())
     }

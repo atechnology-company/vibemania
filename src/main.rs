@@ -65,10 +65,8 @@ async fn main() -> Result<()> {
                             st.log("system", &format!("Error: {}", e), tui::LogLevel::Error);
                             st.done = true;
                         }
-                    } else {
-                        if let Ok(mut st) = state_for_swarm.lock() {
-                            st.done = true;
-                        }
+                    } else if let Ok(mut st) = state_for_swarm.lock() {
+                        st.done = true;
                     }
                 });
 

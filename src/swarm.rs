@@ -33,7 +33,7 @@ pub async fn run_loop(proj: &Project, goal: Option<&str>, max_iter: u32, paralle
 
     if tui_state.is_none() {
         println!("{}", "═══════════════════════════════════════════".bold());
-        println!("  {} {}", "Subspace".bold().cyan(), "— Agent Swarm");
+        println!("  {} — Agent Swarm", "Subspace".bold().cyan());
         println!("{}", "═══════════════════════════════════════════".bold());
         println!("Goal:       {}", goal.unwrap_or("autonomous (discover → audit → complete)").white().bold());
         println!("Project:    {}", proj.dir.display().to_string().cyan());
@@ -251,7 +251,7 @@ pub async fn launch(proj: &Project, goal: Option<&str>, agent_count: u32) -> Res
     let subspace_dir = proj.dir.join(".subspace");
     std::fs::create_dir_all(&subspace_dir)?;
 
-    println!("{} Planning for: {}", "🧠", goal.unwrap_or("autonomous discovery").bold());
+    println!("🧠 Planning for: {}", goal.unwrap_or("autonomous discovery").bold());
     let planner_prompt = planner::build_prompt(proj, goal, 1);
     let plan = acp::run_prompt(&proj.dir, &planner_prompt).await?;
     let tasks = planner::parse_tasks(&plan.text);
