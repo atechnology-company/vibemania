@@ -9,6 +9,7 @@ mod conflict;
 mod config;
 mod worktree;
 mod merger;
+mod acp;
 
 use anyhow::Result;
 use clap::Parser;
