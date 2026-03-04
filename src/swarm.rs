@@ -9,27 +9,73 @@ use crate::acp;
 use crate::config::{self, AgentRole, AgentState, AgentStatus, SwarmState, TaskInfo};
 use crate::planner;
 use crate::project::{self, Project};
+use crate::tui::{AgentRole as TuiRole, AgentStatus as TuiStatus, AgentView, LogLevel, Phase, SharedTuiState};
 use crate::worktree;
 
+macro_rules! tui_log {
+    ($state:expr, $agent:expr, $level:expr, $($arg:tt)*) => {
+        if let Some(ref s) = $state {
+            if let Ok(mut st) = s.lock() {
+                st.log($agent, &format!($($arg)*), $level);
+            }
+        }
+    };
+}
+
+macro_rules! tui_phase {
+    ($state:expr, $phase:expr) => {
+        if let Some(ref s) = $state {
+            if let Ok(mut st) = s.lock() {
+                st.phase = $phase;
+            }
+        }
+    };
+}
+
+macro_rules! tui_agent {
+    ($state:expr, $view:expr) => {
+        if let Some(ref s) = $state {
+            if let Ok(mut st) = s.lock() {
+                let id = $view.id.clone();
+                if let Some(existing) = st.agents.iter_mut().find(|a| a.id == id) {
+                    *existing = $view;
+                } else {
+                    st.agents.push($view);
+                }
+            }
+        }
+    };
+}
+
 /// Run the full plan/execute/merge loop
-pub async fn run_loop(proj: &Project, goal: Option<&str>, max_iter: u32, parallel: u32) -> Result<()> {
+pub async fn run_loop(proj: &Project, goal: Option<&str>, max_iter: u32, parallel: u32, tui_state: Option<SharedTuiState>) -> Result<()> {
     acp::find_acp_binary()?;
 
     let session_name = project::session_name(&proj.dir);
     let base_branch = worktree::current_branch(&proj.dir)?;
 
-    println!("{}", "═══════════════════════════════════════════".bold());
-    println!("  {} {}", "Subspace".bold().cyan(), "— Agent Swarm");
-    println!("{}", "═══════════════════════════════════════════".bold());
-    println!("Goal:       {}", goal.unwrap_or("autonomous (discover → audit → complete)").white().bold());
-    println!("Project:    {}", proj.dir.display().to_string().cyan());
-    println!("Stack:      {}", proj.stack.yellow());
-    println!("Base:       {}", base_branch.green());
-    println!("Agents:     {} parallel", parallel);
-    println!("Executors:  {}", "Sonnet (ACP)".blue());
-    println!("Merger:     {}", "Haiku (ACP)".green());
-    println!("Permissions: {}", "auto-approve".red());
-    println!();
+    // Init TUI state
+    if let Some(ref s) = tui_state {
+        if let Ok(mut st) = s.lock() {
+            st.project_name = proj.dir.file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_default();
+            st.max_iter = max_iter;
+            st.phase = Phase::Starting;
+        }
+    }
+
+    if tui_state.is_none() {
+        println!("{}", "═══════════════════════════════════════════".bold());
+        println!("  {} {}", "Subspace".bold().cyan(), "— Agent Swarm");
+        println!("{}", "═══════════════════════════════════════════".bold());
+        println!("Goal:       {}", goal.unwrap_or("autonomous (discover → audit → complete)").white().bold());
+        println!("Project:    {}", proj.dir.display().to_string().cyan());
+        println!("Stack:      {}", proj.stack.yellow());
+        println!("Base:       {}", base_branch.green());
+        println!("Agents:     {} parallel", parallel);
+        println!();
+    }
 
     let mut state = SwarmState::new(&session_name, &proj.dir.to_string_lossy(), &proj.stack);
     config::set_active_project(&proj.dir)?;
@@ -41,9 +87,14 @@ pub async fn run_loop(proj: &Project, goal: Option<&str>, max_iter: u32, paralle
         println!();
         println!("{}", format!("═══ Iteration {} / {} ═══", i, max_iter).bold());
         state.iteration = i;
+        if let Some(ref s) = tui_state {
+            if let Ok(mut st) = s.lock() { st.iteration = i; }
+        }
 
         // ── Phase A: Plan ──
-        println!("{}", "  🧠 Planning...".dimmed());
+        tui_phase!(tui_state, Phase::Planning);
+        tui_log!(tui_state, "planner", LogLevel::Info, "Analyzing codebase (iteration {}/{})", i, max_iter);
+        if tui_state.is_none() { println!("{}", "  🧠 Planning...".dimmed()); }
         let proj = project::load(&proj.dir)?;
         let planner_prompt = planner::build_prompt(&proj, goal, i);
         std::fs::write(subspace_dir.join("planner-prompt.md"), &planner_prompt)?;
@@ -51,6 +102,13 @@ pub async fn run_loop(proj: &Project, goal: Option<&str>, max_iter: u32, paralle
         let plan = acp::run_prompt(&proj.dir, &planner_prompt).await?;
         std::fs::write(subspace_dir.join("plan.md"), &plan.text)?;
 
+        tui_log!(tui_state, "planner", LogLevel::Success, "Plan complete — {} tasks", planner::parse_tasks(&plan.text).len());
+        tui_agent!(tui_state, AgentView {
+            id: "planner".into(), role: TuiRole::Planner,
+            status: TuiStatus::Done, current_tool: None,
+            files_touched: plan.files_modified.len() as u32,
+            tool_count: plan.tool_calls.len() as u32,
+        });
         state.agents.retain(|a| a.role != AgentRole::Planner);
         state.agents.push(AgentState {
             id: "planner".into(),
@@ -65,8 +123,17 @@ pub async fn run_loop(proj: &Project, goal: Option<&str>, max_iter: u32, paralle
         config::save_state(&proj.dir, &state)?;
 
         if planner::is_complete(&plan.text) {
-            println!();
-            println!("{}", "  ✅ All goals achieved!".green().bold());
+            tui_phase!(tui_state, Phase::Complete);
+            tui_log!(tui_state, "planner", LogLevel::Success, "All goals achieved! Project complete.");
+            if let Some(ref s) = tui_state {
+                if let Ok(mut st) = s.lock() { st.completion_pct = 95; st.done = false; }
+                // Give TUI a moment to show completion, then mark done
+                tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                if let Ok(mut st) = s.lock() { st.done = true; }
+            } else {
+                println!();
+                println!("{}", "  ✅ All goals achieved!".green().bold());
+            }
             return Ok(());
         }
 
@@ -128,6 +195,12 @@ You're in an isolated git worktree — other agents can't see your changes.
             });
 
             agent_ids.push(agent_id.clone());
+            tui_agent!(tui_state, AgentView {
+                id: agent_id.clone(), role: TuiRole::Executor,
+                status: TuiStatus::Running, current_tool: Some("starting...".into()),
+                files_touched: 0, tool_count: 0,
+            });
+            tui_log!(tui_state, &agent_id, LogLevel::Info, "spawned in worktree — {}", task.title);
 
             let wt_path = wt_dir.clone();
             let handle = tokio::task::spawn_blocking(move || {
@@ -153,8 +226,14 @@ You're in an isolated git worktree — other agents can't see your changes.
                     if let Some(a) = state.agents.iter_mut().find(|a| a.id == id) {
                         a.status = AgentStatus::Completed;
                         a.finished_at = Some(Utc::now());
-                        a.files_modified = output.files_modified;
+                        a.files_modified = output.files_modified.clone();
                     }
+                    tui_agent!(tui_state, AgentView {
+                        id: id.clone(), role: TuiRole::Executor, status: TuiStatus::Done,
+                        current_tool: None, files_touched: output.files_modified.len() as u32,
+                        tool_count: output.tool_calls.len() as u32,
+                    });
+                    tui_log!(tui_state, &id, LogLevel::Success, "done — {} tools, {} files", output.tool_calls.len(), output.files_modified.len());
                     completed.push(id);
                 }
                 Ok(Err(e)) => println!("    {} agent error: {}", "✗".red(), e),

@@ -35,6 +35,9 @@ pub enum Commands {
         /// Max parallel agents (default: 3)
         #[arg(long, default_value = "3")]
         parallel: u32,
+        /// Show live TUI dashboard
+        #[arg(long)]
+        tui: bool,
     },
 
     /// Manage the agent swarm

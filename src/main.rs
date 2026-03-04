@@ -11,6 +11,7 @@ mod worktree;
 mod merger;
 mod acp;
 mod subspace_file;
+mod tui;
 
 use anyhow::Result;
 use clap::Parser;
@@ -27,7 +28,6 @@ async fn main() -> Result<()> {
         Commands::Init { project_dir } => {
             let dir = project::resolve_dir(project_dir)?;
             project::init(&dir)?;
-            // Create empty subspace.md if it doesn't exist
             let sf_path = SubspaceFile::path(&dir);
             if !sf_path.exists() {
                 let sf = SubspaceFile::default();
@@ -42,10 +42,39 @@ async fn main() -> Result<()> {
             let result = acp::run_prompt(&dir, &prompt).await?;
             println!("{}", result.text);
         }
-        Commands::Run { goal, project_dir, max_iter, parallel } => {
+        Commands::Run { goal, project_dir, max_iter, parallel, tui: use_tui } => {
             let dir = project::resolve_dir(project_dir)?;
             let proj = project::load_or_init(&dir)?;
-            swarm::run_loop(&proj, goal.as_deref(), max_iter, parallel).await?;
+
+            if use_tui {
+                let state = tui::new_state();
+                let state_for_swarm = state.clone();
+                let proj_dir = dir.clone();
+                let goal_str = goal.map(|g| g.to_string());
+
+                // Run swarm in background task
+                tokio::spawn(async move {
+                    let proj = project::load_or_init(&proj_dir).unwrap();
+                    if let Err(e) = swarm::run_loop(
+                        &proj, goal_str.as_deref(), max_iter, parallel,
+                        Some(state_for_swarm.clone()),
+                    ).await {
+                        if let Ok(mut st) = state_for_swarm.lock() {
+                            st.log("system", &format!("Error: {}", e), tui::LogLevel::Error);
+                            st.done = true;
+                        }
+                    } else {
+                        if let Ok(mut st) = state_for_swarm.lock() {
+                            st.done = true;
+                        }
+                    }
+                });
+
+                // Run TUI in the main thread (blocks until done or q)
+                tui::run(state)?;
+            } else {
+                swarm::run_loop(&proj, goal.as_deref(), max_iter, parallel, None).await?;
+            }
         }
         Commands::Swarm { command } => match command {
             SwarmCommands::Launch { goal, project_dir, agents } => {
@@ -78,17 +107,12 @@ async fn main() -> Result<()> {
                 };
                 let id = sf.tasks.len() as u32 + 1;
                 sf.tasks.push(Task {
-                    id,
-                    title: title.clone(),
-                    priority: prio,
-                    status: TaskStatus::Todo,
-                    files: Vec::new(),
-                    description: String::new(),
+                    id, title: title.clone(), priority: prio,
+                    status: TaskStatus::Todo, files: Vec::new(), description: String::new(),
                 });
                 sf.save(&dir)?;
                 println!("{} Added task: {}", "✓".green(), title);
             } else {
-                // Show tasks
                 let sf_path = SubspaceFile::path(&dir);
                 if !sf_path.exists() {
                     println!("{}", "No subspace.md found. Run `subspace init` or `subspace run` first.".dimmed());
@@ -119,18 +143,13 @@ async fn main() -> Result<()> {
                         }
                     }
                 }
-
                 if !sf.completed.is_empty() {
                     println!();
                     println!("Completed ({}):", sf.completed.len());
                     for c in sf.completed.iter().take(5) {
                         println!("  {} {}", "✓".green(), c.dimmed());
                     }
-                    if sf.completed.len() > 5 {
-                        println!("  ... and {} more", sf.completed.len() - 5);
-                    }
                 }
-
                 if !sf.roadmap.is_empty() {
                     println!();
                     println!("Roadmap:");
