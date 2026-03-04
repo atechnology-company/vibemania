@@ -538,7 +538,7 @@ fn parse_dream_features(output: &str) -> Vec<DreamFeature> {
             in_section = "";
         } else if let Some(ref mut f) = current {
             if t.starts_with("**Wow Factor:**") {
-                f.wow_factor = t.chars().filter(|c| c.is_ascii_digit()).next()
+                f.wow_factor = t.chars().find(|c| c.is_ascii_digit())
                     .and_then(|c| c.to_digit(10)).unwrap_or(7) as u8;
             } else if t.starts_with("**The Dream:**") {
                 in_section = "dream";
@@ -556,8 +556,8 @@ fn parse_dream_features(output: &str) -> Vec<DreamFeature> {
                     "dream" => { if !t.is_empty() { f.description.push(' '); f.description.push_str(t); } }
                     "notes" => { if !t.is_empty() { f.creative_notes.push(' '); f.creative_notes.push_str(t); } }
                     "files" => {
-                        if t.starts_with("- ") {
-                            let file = t[2..].trim().to_string();
+                        if let Some(stripped) = t.strip_prefix("- ") {
+                            let file = stripped.trim().to_string();
                             if !file.is_empty() { f.files.push(file); }
                         }
                     }

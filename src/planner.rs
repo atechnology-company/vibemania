@@ -307,8 +307,8 @@ fn extract_files(content: &str) -> Vec<String> {
             if t.starts_with("- ") || t.starts_with("* ") {
                 let f = t.trim_start_matches("- ").trim_start_matches("* ").trim().to_string();
                 if !f.is_empty() && (f.contains('/') || f.contains('.')) { files.push(f); }
-            } else if t.starts_with('#') || t.is_empty() {
-                if !files.is_empty() { in_files = false; }
+            } else if (t.starts_with('#') || t.is_empty()) && !files.is_empty() {
+                in_files = false;
             }
         }
     }
