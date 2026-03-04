@@ -11,41 +11,7 @@ use crate::planner;
 use crate::project::{self, Project};
 use crate::tui::{AgentRole as TuiRole, AgentStatus as TuiStatus, AgentView, LogLevel, Phase, SharedTuiState};
 use crate::worktree;
-
-macro_rules! tui_log {
-    ($state:expr, $agent:expr, $level:expr, $($arg:tt)*) => {
-        if let Some(ref s) = $state {
-            if let Ok(mut st) = s.lock() {
-                st.log($agent, &format!($($arg)*), $level);
-            }
-        }
-    };
-}
-
-macro_rules! tui_phase {
-    ($state:expr, $phase:expr) => {
-        if let Some(ref s) = $state {
-            if let Ok(mut st) = s.lock() {
-                st.phase = $phase;
-            }
-        }
-    };
-}
-
-macro_rules! tui_agent {
-    ($state:expr, $view:expr) => {
-        if let Some(ref s) = $state {
-            if let Ok(mut st) = s.lock() {
-                let id = $view.id.clone();
-                if let Some(existing) = st.agents.iter_mut().find(|a| a.id == id) {
-                    *existing = $view;
-                } else {
-                    st.agents.push($view);
-                }
-            }
-        }
-    };
-}
+use crate::{tui_agent, tui_log, tui_phase};
 
 /// Run the full plan/execute/merge loop
 pub async fn run_loop(proj: &Project, goal: Option<&str>, max_iter: u32, parallel: u32, tui_state: Option<SharedTuiState>) -> Result<()> {

@@ -11,6 +11,7 @@ mod worktree;
 mod merger;
 mod acp;
 mod subspace_file;
+mod dream;
 mod tui;
 
 use anyhow::Result;
@@ -93,6 +94,26 @@ async fn main() -> Result<()> {
                 swarm::clean(&dir)?;
             }
         },
+        Commands::Dream { project_dir, parallel, tui: use_tui } => {
+            let dir = project::resolve_dir(project_dir)?;
+            let proj = project::load_or_init(&dir)?;
+            if use_tui {
+                let state = tui::new_state();
+                let state_for_dream = state.clone();
+                let proj_dir = dir.clone();
+                tokio::spawn(async move {
+                    let proj = project::load_or_init(&proj_dir).unwrap();
+                    if let Err(e) = dream::run(&proj, parallel, Some(state_for_dream.clone())).await {
+                        if let Ok(mut st) = state_for_dream.lock() {
+                            st.log("system", &format!("Error: {}", e), tui::LogLevel::Error);
+                        }
+                    }
+                });
+                tui::run(state)?;
+            } else {
+                dream::run(&proj, parallel, None).await?;
+            }
+        }
         Commands::Tasks { project_dir, add, priority } => {
             let dir = project::resolve_dir(project_dir)?;
             let mut sf = SubspaceFile::load_or_default(&dir)?;

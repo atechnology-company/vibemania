@@ -46,6 +46,18 @@ pub enum Commands {
         command: SwarmCommands,
     },
 
+    /// Dream mode — AI invents new features forever (Ctrl+C to stop)
+    Dream {
+        #[arg(long)]
+        project_dir: Option<String>,
+        /// Parallel builder agents (default: 2)
+        #[arg(long, default_value = "2")]
+        parallel: u32,
+        /// Show live TUI dashboard
+        #[arg(long)]
+        tui: bool,
+    },
+
     /// Show and manage tasks in subspace.md
     Tasks {
         #[arg(long)]

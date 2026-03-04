@@ -111,6 +111,44 @@ pub fn new_state() -> SharedTuiState {
     Arc::new(Mutex::new(TuiState::default()))
 }
 
+#[macro_export]
+macro_rules! tui_log {
+    ($state:expr, $agent:expr, $level:expr, $($arg:tt)*) => {
+        if let Some(ref s) = $state {
+            if let Ok(mut st) = s.lock() {
+                st.log($agent, &format!($($arg)*), $level);
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! tui_phase {
+    ($state:expr, $phase:expr) => {
+        if let Some(ref s) = $state {
+            if let Ok(mut st) = s.lock() {
+                st.phase = $phase;
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! tui_agent {
+    ($state:expr, $view:expr) => {
+        if let Some(ref s) = $state {
+            if let Ok(mut st) = s.lock() {
+                let id = $view.id.clone();
+                if let Some(existing) = st.agents.iter_mut().find(|a| a.id == id) {
+                    *existing = $view;
+                } else {
+                    st.agents.push($view);
+                }
+            }
+        }
+    };
+}
+
 /// Run the TUI in a blocking loop until state.done is true
 pub fn run(state: SharedTuiState) -> Result<()> {
     enable_raw_mode()?;
