@@ -35,7 +35,7 @@ pub fn is_available() -> bool {
 }
 
 /// Run a prompt through Windows AI (Phi-4 mini)
-pub async fn run(prompt: &str) -> Result<String> {
+pub async fn run(_prompt: &str) -> Result<String> {
     #[cfg(target_os = "windows")]
     {
         // Use PowerShell + Windows.AI API via COM/WinRT

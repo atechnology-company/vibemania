@@ -29,7 +29,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
+    widgets::{Block, Borders, List, ListItem, Paragraph},
     Frame, Terminal,
 };
 use std::{
@@ -486,7 +486,7 @@ fn render_approval(
 
         let cursor_mark = if is_cursor { "▶ " } else { "  " };
 
-        let mut spans = vec![
+        let spans = vec![
             Span::styled(cursor_mark, Style::default().fg(Color::Magenta)),
             Span::styled(
                 format!("{} ", check),

@@ -41,7 +41,7 @@ pub fn is_available() -> bool {
 }
 
 /// Run a prompt through Apple Intelligence (FoundationModels)
-pub async fn run(prompt: &str) -> Result<String> {
+pub async fn run(_prompt: &str) -> Result<String> {
     #[cfg(target_os = "macos")]
     {
         // Spawn a tiny Swift one-liner via `swift -e` (available on macOS with Xcode CLI tools)

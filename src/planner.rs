@@ -1,7 +1,7 @@
 use regex::Regex;
 
 use crate::project::Project;
-use crate::subspace_file::{SubspaceFile, TaskStatus};
+use crate::subspace_file::SubspaceFile;
 
 /// Build the planner prompt.
 /// 

@@ -1,8 +1,8 @@
-use anyhow::{Context, Result};
-use colored::*;
-use std::path::Path;
+#[allow(dead_code)]
 
-use crate::agent;
+use anyhow::Result;
+use colored::*;
+
 use crate::config::{self, AgentRole, AgentState, AgentStatus};
 use crate::project::Project;
 use crate::worktree;

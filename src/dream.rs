@@ -11,7 +11,7 @@ use anyhow::Result;
 use chrono::Utc;
 use colored::*;
 use std::io::{self, Write};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::acp;
 use crate::config::{self, AgentRole, AgentState, AgentStatus, SwarmState, TaskInfo};
@@ -450,7 +450,7 @@ Make this feature something a user will discover and go "whoa"."#,
 }
 
 fn build_dream_merge_prompt(
-    proj: &Project, base: &str, agents: &[String], subspace_dir: &Path,
+    proj: &Project, base: &str, agents: &[String], _subspace_dir: &Path,
 ) -> Result<String> {
     let mut details = String::new();
     for id in agents {
