@@ -53,9 +53,15 @@ pub enum Commands {
         /// Parallel builder agents (default: 2)
         #[arg(long, default_value = "2")]
         parallel: u32,
-        /// Show live TUI dashboard
+        /// Show live TUI dashboard with interactive feature picker
         #[arg(long)]
         tui: bool,
+        /// Skip approval gate and auto-build top features
+        #[arg(long)]
+        auto_approve: bool,
+        /// Use on-device AI (Apple Intelligence / Windows AI) for triage
+        #[arg(long)]
+        local: bool,
     },
 
     /// Show and manage tasks in subspace.md

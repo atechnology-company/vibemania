@@ -51,6 +51,25 @@ pub struct TuiState {
     pub tasks_done: u32,
     pub phase: Phase,
     pub done: bool,
+    /// Pending approval request — dreamer wants user to pick features
+    pub pending_approval: Option<ApprovalRequest>,
+    /// Set by TUI when user approves — indices into pending_approval.features
+    pub approved_indices: Option<Vec<usize>>,
+}
+
+/// A dream feature shown in the approval picker
+#[derive(Debug, Clone)]
+pub struct DreamFeatureView {
+    pub title: String,
+    pub description: String,
+    pub wow_factor: u8,
+}
+
+/// Approval request sent from dream mode to TUI
+#[derive(Debug, Clone)]
+pub struct ApprovalRequest {
+    pub features: Vec<DreamFeatureView>,
+    pub max_select: usize,
 }
 
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -157,21 +176,93 @@ pub fn run(state: SharedTuiState) -> Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
+    // Approval picker state (local to TUI thread)
+    let mut picker_selected: Vec<bool> = Vec::new();
+    let mut picker_cursor: usize = 0;
+
     loop {
         {
             let st = state.lock().unwrap();
-            terminal.draw(|f| render(f, &st))?;
+
+            // Sync picker_selected length with pending_approval features
+            if let Some(ref req) = st.pending_approval {
+                if picker_selected.len() != req.features.len() {
+                    picker_selected = vec![false; req.features.len()];
+                    picker_cursor = 0;
+                }
+                terminal.draw(|f| render_approval(f, req, &picker_selected, picker_cursor))?;
+            } else {
+                picker_selected.clear();
+                terminal.draw(|f| render(f, &st))?;
+            }
+
             if st.done { break; }
         }
 
-        // Poll for quit key (q or Ctrl-C)
-        if event::poll(Duration::from_millis(250))? {
+        if event::poll(Duration::from_millis(200))? {
             if let Event::Key(key) = event::read()? {
                 if key.kind == KeyEventKind::Press {
-                    match key.code {
-                        KeyCode::Char('q') | KeyCode::Char('Q') => break,
-                        KeyCode::Esc => break,
-                        _ => {}
+                    let has_approval = state.lock().unwrap().pending_approval.is_some();
+
+                    if has_approval {
+                        let req_len = state.lock().unwrap()
+                            .pending_approval.as_ref().map(|r| r.features.len()).unwrap_or(0);
+                        let max_sel = state.lock().unwrap()
+                            .pending_approval.as_ref().map(|r| r.max_select).unwrap_or(1);
+
+                        match key.code {
+                            KeyCode::Up | KeyCode::Char('k') => {
+                                picker_cursor = picker_cursor.saturating_sub(1);
+                            }
+                            KeyCode::Down | KeyCode::Char('j') => {
+                                picker_cursor = (picker_cursor + 1).min(req_len.saturating_sub(1));
+                            }
+                            KeyCode::Char(' ') => {
+                                // Toggle selection (respect max_select)
+                                if picker_cursor < picker_selected.len() {
+                                    let currently = picker_selected[picker_cursor];
+                                    let count = picker_selected.iter().filter(|&&x| x).count();
+                                    if currently {
+                                        picker_selected[picker_cursor] = false;
+                                    } else if count < max_sel {
+                                        picker_selected[picker_cursor] = true;
+                                    }
+                                }
+                            }
+                            KeyCode::Char('a') => {
+                                // Select all up to max
+                                let mut n = 0;
+                                for s in picker_selected.iter_mut() {
+                                    if n < max_sel { *s = true; n += 1; }
+                                    else { *s = false; }
+                                }
+                            }
+                            KeyCode::Enter => {
+                                // Submit selection
+                                let indices: Vec<usize> = picker_selected.iter()
+                                    .enumerate()
+                                    .filter(|(_, &s)| s)
+                                    .map(|(i, _)| i)
+                                    .collect();
+                                if let Ok(mut st) = state.lock() {
+                                    st.approved_indices = Some(indices);
+                                }
+                                picker_selected.clear();
+                            }
+                            KeyCode::Esc | KeyCode::Char('s') => {
+                                // Skip (submit empty)
+                                if let Ok(mut st) = state.lock() {
+                                    st.approved_indices = Some(vec![]);
+                                }
+                                picker_selected.clear();
+                            }
+                            _ => {}
+                        }
+                    } else {
+                        match key.code {
+                            KeyCode::Char('q') | KeyCode::Char('Q') | KeyCode::Esc => break,
+                            _ => {}
+                        }
                     }
                 }
             }
@@ -351,4 +442,84 @@ fn render_task_strip(f: &mut Frame, area: Rect, state: &TuiState) {
         .style(Style::default().fg(Color::White).bg(Color::DarkGray))
         .block(Block::default());
     f.render_widget(para, area);
+}
+
+/// Approval picker — full-screen overlay when dreamer has results waiting
+fn render_approval(
+    f: &mut Frame,
+    req: &ApprovalRequest,
+    selected: &[bool],
+    cursor: usize,
+) {
+    let size = f.area();
+
+    let block = Block::default()
+        .title(" ✨ DREAMER RESULTS — Pick features to build (Space=toggle, Enter=confirm, s=skip, a=all) ")
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::Magenta));
+
+    let inner = block.inner(size);
+    f.render_widget(block, size);
+
+    let sel_count = selected.iter().filter(|&&x| x).count();
+    let help = Paragraph::new(format!(
+        "  Selected: {}/{}  (max {})    ↑↓/jk to move, Space to toggle, Enter to build, s to skip",
+        sel_count, selected.len(), req.max_select
+    )).style(Style::default().fg(Color::DarkGray));
+
+    let layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(2), Constraint::Min(0)])
+        .split(inner);
+
+    f.render_widget(help, layout[0]);
+
+    let items: Vec<ListItem> = req.features.iter().enumerate().map(|(i, feat)| {
+        let is_cursor = i == cursor;
+        let is_sel = selected.get(i).copied().unwrap_or(false);
+
+        let check = if is_sel { "◉" } else { "○" };
+        let wow_bar = "█".repeat(feat.wow_factor as usize / 2);
+        let wow_color = if feat.wow_factor >= 8 { Color::Green }
+            else if feat.wow_factor >= 6 { Color::Yellow }
+            else { Color::DarkGray };
+
+        let cursor_mark = if is_cursor { "▶ " } else { "  " };
+
+        let mut spans = vec![
+            Span::styled(cursor_mark, Style::default().fg(Color::Magenta)),
+            Span::styled(
+                format!("{} ", check),
+                Style::default().fg(if is_sel { Color::Green } else { Color::DarkGray }),
+            ),
+            Span::styled(
+                format!("{:>2}/10 ", feat.wow_factor),
+                Style::default().fg(wow_color),
+            ),
+            Span::styled(wow_bar, Style::default().fg(wow_color)),
+            Span::raw("  "),
+            Span::styled(
+                feat.title.clone(),
+                Style::default()
+                    .fg(if is_cursor { Color::White } else { Color::Gray })
+                    .add_modifier(if is_cursor { Modifier::BOLD } else { Modifier::empty() }),
+            ),
+        ];
+
+        let mut lines = vec![Line::from(spans)];
+        // Description line
+        lines.push(Line::from(vec![
+            Span::raw("       "),
+            Span::styled(
+                feat.description.chars().take(90).collect::<String>(),
+                Style::default().fg(Color::DarkGray),
+            ),
+        ]));
+        lines.push(Line::from(""));
+
+        ListItem::new(lines)
+    }).collect();
+
+    let list = List::new(items);
+    f.render_widget(list, layout[1]);
 }
