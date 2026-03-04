@@ -9,24 +9,24 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Initialize a project for Subspace (creates goals.md, .subspace/)
+    /// Initialize a project for Subspace (creates .subspace/)
     Init {
-        /// Project directory (default: current dir)
         #[arg(long)]
         project_dir: Option<String>,
     },
 
-    /// Run planner phase only — analyze goals and output tasks
+    /// Run planner only — output tasks without executing
     Plan {
+        /// Goal to plan for
+        goal: String,
         #[arg(long)]
         project_dir: Option<String>,
-        /// AI tool: claude, amp (default: claude)
-        #[arg(long)]
-        tool: Option<String>,
     },
 
-    /// Full plan/execute loop (worktree-isolated agents + Sonnet merger)
+    /// Full plan/execute/merge loop
     Run {
+        /// What to build (the goal)
+        goal: String,
         #[arg(long)]
         project_dir: Option<String>,
         /// Max iterations (default: 10)
@@ -35,9 +35,6 @@ pub enum Commands {
         /// Max parallel agents (default: 3)
         #[arg(long, default_value = "3")]
         parallel: u32,
-        /// AI tool: claude, amp (default: claude)
-        #[arg(long)]
-        tool: Option<String>,
     },
 
     /// Manage the agent swarm
@@ -46,7 +43,7 @@ pub enum Commands {
         command: SwarmCommands,
     },
 
-    /// Show project status (progress, agents, iteration)
+    /// Show project status
     Status {
         #[arg(long)]
         project_dir: Option<String>,
@@ -61,54 +58,33 @@ pub enum Commands {
 
 #[derive(Subcommand)]
 pub enum SwarmCommands {
-    /// Launch parallel agent swarm (each in its own worktree)
+    /// Launch parallel agents for a goal
     Launch {
+        /// What to build
+        goal: String,
         #[arg(long)]
         project_dir: Option<String>,
         /// Number of executor agents (default: 3)
         #[arg(long, default_value = "3")]
         agents: u32,
-        /// AI tool: claude, amp (default: claude)
-        #[arg(long)]
-        tool: Option<String>,
     },
 
-    /// Show all running agents and their status
+    /// Show all agents and their status
     Status,
 
-    /// Stream/tail logs from a specific agent
+    /// View agent output
     Logs {
         /// Agent ID (e.g. executor-1)
         agent_id: String,
-        /// Follow log output
-        #[arg(short, long)]
-        follow: bool,
     },
 
-    /// Send instruction to a specific agent
-    Steer {
-        /// Agent ID
-        agent_id: String,
-        /// Message to send
-        message: String,
-    },
-
-    /// Kill agent(s)
-    Kill {
-        /// Agent ID to kill
-        agent_id: Option<String>,
-        /// Kill all agents
-        #[arg(long)]
-        all: bool,
-    },
-
-    /// Merge all completed agent branches using Sonnet
+    /// Merge completed agent branches (Haiku)
     Merge {
         #[arg(long)]
         project_dir: Option<String>,
     },
 
-    /// Clean up worktrees and agent branches
+    /// Clean up worktrees and state
     Clean {
         #[arg(long)]
         project_dir: Option<String>,

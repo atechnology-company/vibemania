@@ -103,6 +103,35 @@ pub fn load(dir: &Path) -> Result<Project> {
     })
 }
 
+/// Load project or auto-init (goals come from CLI now, not goals.md)
+pub fn load_or_init(dir: &Path) -> Result<Project> {
+    let subspace_dir = dir.join(".subspace");
+    if !subspace_dir.exists() {
+        std::fs::create_dir_all(&subspace_dir)?;
+    }
+
+    let progress_path = dir.join("progress.md");
+    let progress = if progress_path.exists() {
+        std::fs::read_to_string(&progress_path)?
+    } else {
+        "No progress yet.".to_string()
+    };
+
+    let goals_path = dir.join("goals.md");
+    let goals = if goals_path.exists() {
+        std::fs::read_to_string(&goals_path)?
+    } else {
+        String::new()
+    };
+
+    Ok(Project {
+        dir: dir.to_path_buf(),
+        stack: detect_stack(dir),
+        goals,
+        progress,
+    })
+}
+
 pub fn detect_stack(dir: &Path) -> String {
     let mut stack = Vec::new();
     let checks = [

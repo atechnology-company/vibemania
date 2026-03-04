@@ -1,11 +1,90 @@
 use anyhow::Result;
 use regex::Regex;
 
-use crate::agent;
-use crate::config::AgentRole;
 use crate::project::Project;
 
-const PLANNER_TEMPLATE: &str = include_str!("../prompts/planner.md");
+/// Build the planner prompt — planner manages progress tracking
+pub fn build_prompt(proj: &Project, goal: &str, iteration: u32) -> String {
+    let progress = if proj.progress.is_empty() || proj.progress == "No progress yet." {
+        "This is the first iteration. No progress yet.".to_string()
+    } else {
+        proj.progress.clone()
+    };
+
+    format!(
+        r#"# Subspace Planner Agent
+
+You are the PLANNING phase of Subspace, an AI coding agent swarm orchestrator.
+This is iteration {iteration}. Detected project stack: {stack}.
+
+## The Goal
+
+{goal}
+
+## Progress So Far
+
+{progress}
+
+## Your Job
+
+1. Read the project's current state (check files, git log, etc.)
+2. Compare against the goal
+3. If the goal is FULLY achieved: output `<subspace>COMPLETE</subspace>` and nothing else
+4. Otherwise: output specific, actionable tasks for executor agents
+
+## First Iteration Tasks
+
+If this is iteration 1, also:
+- Create/update `progress.md` with the goal and initial state
+- Set up any scaffolding needed
+
+## Task Output Format
+
+For a SINGLE task:
+### Task Title
+[one-line summary]
+### Why This Is Next
+[brief reasoning]
+### Detailed Instructions
+[step-by-step for an AI developer]
+### Files Affected
+- path/to/file1
+- path/to/file2
+### Quality Checks
+[commands to verify]
+
+For MULTIPLE parallel tasks:
+<subspace_tasks max_parallel="3">
+
+### Task 1: Title
+#### Why This Is Next
+...
+#### Detailed Instructions
+...
+#### Files Affected
+- file1
+- file2
+#### Quality Checks
+...
+
+### Task 2: Title
+...
+
+</subspace_tasks>
+
+## Rules
+
+- Plan tasks that can run IN PARALLEL (no shared files between tasks)
+- Be SPECIFIC: "Add auth middleware to src/auth.rs" not "improve auth"
+- Each task must be completable by one agent in isolation
+- List ALL files each task will touch (for conflict avoidance)
+- If tasks MUST be sequential, output only ONE task"#,
+        iteration = iteration,
+        stack = proj.stack,
+        goal = goal,
+        progress = progress,
+    )
+}
 
 #[derive(Debug, Clone)]
 pub struct PlannedTask {
@@ -15,35 +94,11 @@ pub struct PlannedTask {
     pub files: Vec<String>,
 }
 
-/// Build the planner prompt with project context
-pub fn build_prompt(proj: &Project, iteration: u32) -> String {
-    let prompt = PLANNER_TEMPLATE
-        .replace("{{ITERATION}}", &iteration.to_string())
-        .replace("{{STACK}}", &proj.stack);
-
-    format!(
-        "{}\n\n## Current Goals\n\n{}\n\n## Progress So Far\n\n{}",
-        prompt, proj.goals, proj.progress
-    )
-}
-
-/// Write prompt to a temp file and return path
-pub fn write_prompt(proj: &Project, iteration: u32) -> Result<String> {
-    let subspace_dir = proj.dir.join(".subspace");
-    std::fs::create_dir_all(&subspace_dir)?;
-    let path = subspace_dir.join("planner-prompt.md");
-    let prompt = build_prompt(proj, iteration);
-    std::fs::write(&path, &prompt)?;
-    Ok(path.to_string_lossy().to_string())
-}
-
 /// Parse planner output into tasks
 pub fn parse_tasks(output: &str) -> Vec<PlannedTask> {
-    // Check for multi-task format
-    if output.contains("<vibemania_tasks") || output.contains("<subspace_tasks") {
+    if output.contains("<subspace_tasks") || output.contains("<vibemania_tasks") {
         parse_multi_tasks(output)
     } else {
-        // Single task
         vec![PlannedTask {
             id: 1,
             title: extract_title(output),
@@ -55,14 +110,13 @@ pub fn parse_tasks(output: &str) -> Vec<PlannedTask> {
 
 /// Check if planner says we're done
 pub fn is_complete(output: &str) -> bool {
-    output.contains("<vibemania>COMPLETE</vibemania>")
-        || output.contains("<subspace>COMPLETE</subspace>")
+    output.contains("<subspace>COMPLETE</subspace>")
+        || output.contains("<vibemania>COMPLETE</vibemania>")
 }
 
 fn parse_multi_tasks(output: &str) -> Vec<PlannedTask> {
     let mut tasks = Vec::new();
     let re = Regex::new(r"###\s+Task\s+(\d+):\s*(.+)").unwrap();
-
     let sections: Vec<&str> = output.split("### Task ").collect();
 
     for section in sections.iter().skip(1) {
@@ -71,12 +125,7 @@ fn parse_multi_tasks(output: &str) -> Vec<PlannedTask> {
             let id: u32 = caps[1].parse().unwrap_or(tasks.len() as u32 + 1);
             let title = caps[2].trim().to_string();
             let files = extract_files(&full);
-            tasks.push(PlannedTask {
-                id,
-                title,
-                content: full,
-                files,
-            });
+            tasks.push(PlannedTask { id, title, content: full, files });
         }
     }
 
@@ -132,35 +181,5 @@ fn extract_files(content: &str) -> Vec<String> {
             }
         }
     }
-
     files
-}
-
-/// Run the planner and return its output
-pub async fn run_planner(proj: &Project, tool: &str) -> Result<String> {
-    let prompt_file = write_prompt(proj, 1)?;
-    let session = crate::project::session_name(&proj.dir);
-
-    println!("Running planner...");
-
-    let _agent_state = agent::spawn(
-        &session,
-        "planner",
-        AgentRole::Planner,
-        tool,
-        &prompt_file,
-        &proj.dir.to_string_lossy(),
-        None,
-    )?;
-
-    // Wait for planner to finish
-    loop {
-        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-        if agent::is_done(&session, "planner")? || !agent::is_running(&session, "planner") {
-            break;
-        }
-    }
-
-    let output = agent::get_output(&session, "planner", 500)?;
-    Ok(output)
 }
