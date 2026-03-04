@@ -231,3 +231,69 @@ pub fn append_progress(dir: &Path, entry: &str) -> Result<()> {
     writeln!(file, "\n{}", entry)?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_detect_rust() {
+        let dir = tempdir().unwrap();
+        std::fs::write(dir.path().join("Cargo.toml"), "").unwrap();
+        assert_eq!(detect_stack(dir.path()), "rust");
+    }
+
+    #[test]
+    fn test_detect_node() {
+        let dir = tempdir().unwrap();
+        std::fs::write(dir.path().join("package.json"), "").unwrap();
+        assert_eq!(detect_stack(dir.path()), "node");
+    }
+
+    #[test]
+    fn test_detect_python_requirements() {
+        let dir = tempdir().unwrap();
+        std::fs::write(dir.path().join("requirements.txt"), "").unwrap();
+        assert_eq!(detect_stack(dir.path()), "python");
+    }
+
+    #[test]
+    fn test_detect_python_pyproject() {
+        let dir = tempdir().unwrap();
+        std::fs::write(dir.path().join("pyproject.toml"), "").unwrap();
+        assert_eq!(detect_stack(dir.path()), "python");
+    }
+
+    #[test]
+    fn test_detect_multiple() {
+        let dir = tempdir().unwrap();
+        std::fs::write(dir.path().join("Cargo.toml"), "").unwrap();
+        std::fs::write(dir.path().join("Dockerfile"), "").unwrap();
+        let result = detect_stack(dir.path());
+        assert!(result.contains("rust"), "expected 'rust' in '{}'", result);
+        assert!(result.contains("docker"), "expected 'docker' in '{}'", result);
+    }
+
+    #[test]
+    fn test_detect_unknown() {
+        let dir = tempdir().unwrap();
+        assert_eq!(detect_stack(dir.path()), "unknown");
+    }
+
+    #[test]
+    fn test_detect_nextjs() {
+        let dir = tempdir().unwrap();
+        std::fs::write(dir.path().join("next.config.js"), "").unwrap();
+        std::fs::write(dir.path().join("package.json"), "").unwrap();
+        let result = detect_stack(dir.path());
+        assert!(result.contains("nextjs"), "expected 'nextjs' in '{}'", result);
+        assert!(result.contains("node"), "expected 'node' in '{}'", result);
+    }
+
+    #[test]
+    fn test_session_name() {
+        let dir = PathBuf::from("/tmp/my-cool-project");
+        assert_eq!(session_name(&dir), "subspace-my-cool-project");
+    }
+}
