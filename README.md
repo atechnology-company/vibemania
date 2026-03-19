@@ -1,4 +1,4 @@
-# vibemania
+# vibemania (archive -- moved to [unthinkclaw](https://github.com/undivisible/unthinkclaw))
 
 vibemania is a two-phase autonomous AI development loop. Instead of running the same prompt repeatedly, vibemania uses one AI to **plan** what to do next, then feeds that plan to a second AI to **execute** it. Memory persists across iterations via `progress.md` and git history.
 
